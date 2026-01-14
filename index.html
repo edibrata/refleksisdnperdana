@@ -18,7 +18,9 @@
         details summary::-webkit-details-marker { display:none; }
         details summary { list-style: none; }
         
-        .card { background: white; border-radius: 1rem; border: 1px solid #e2e8f0; overflow: hidden; transition: all 0.3s ease; }
+        .card { background: white; border-radius: 1rem; border: 1px solid #e2e8f0; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .card:hover { border-color: #cbd5e1; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05); }
+        
         .card-disabled { opacity: 0.6; pointer-events: none; background-color: #f1f5f9; }
         
         .input-field { width: 100%; padding: 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.6rem; outline: none; transition: all 0.2s; font-size: 0.875rem; resize: vertical; }
@@ -40,20 +42,38 @@
         .status-complete { background-color: #22c55e; color: white; }
 
         .hidden { display: none; }
-        #login-modal { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(4px); }
-        .db-table-container { max-height: 700px; overflow: auto; }
-        table thead th { position: sticky; top: 0; background: #f8fafc; z-index: 10; border-bottom: 2px solid #e2e8f0; }
+        #login-modal, #gemini-modal, .general-modal-overlay { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(4px); }
+        .db-table-container { max-height: 600px; overflow: auto; position: relative; }
+        table thead th { position: sticky; top: 0; background: #f8fafc; z-index: 10; border-bottom: 2px solid #e2e8f0; cursor: pointer; user-select: none; }
+        table thead th:hover { background: #f1f5f9; }
 
-        .ai-glow { animation: glow 2s infinite alternate; }
-        @keyframes glow { from { box-shadow: 0 0 5px #3b82f6; } to { box-shadow: 0 0 20px #3b82f6; } }
+        .presentation-text { font-size: 1.125rem; line-height: 1.75rem; font-style: normal !important; }
+        .presentation-header { font-size: 1.5rem; font-weight: 800; }
+        .no-italic { font-style: normal !important; }
         
-        /* Typography for presentation */
-        .presentation-text { font-size: 1.1rem; line-height: 1.7; color: #1e293b; font-weight: 400; }
-        .presentation-title { font-size: 1.25rem; font-weight: 800; color: #0f172a; }
-        .presentation-label { font-size: 0.75rem; font-weight: 800; color: #3b82f6; text-transform: uppercase; letter-spacing: 0.05em; }
+        .ai-loading { animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
+
+        .sort-icon { display: inline-block; margin-left: 4px; font-size: 10px; opacity: 0.5; }
+        .sort-active { opacity: 1; color: #1e40af; }
+
+        .dashboard-accordion { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .dashboard-accordion:hover { border-color: #bfdbfe; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        
+        .ai-synthesis-box { transition: all 0.3s ease; cursor: pointer; position: relative; }
+        .ai-synthesis-box:hover { transform: translateY(-2px); border-color: #3b82f6; background-color: #f0f7ff; box-shadow: 0 15px 30px -5px rgba(59, 130, 246, 0.15); }
+
+        .toast-container { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 0.5rem; pointer-events: none; }
+        .toast-item { background: #0f172a; color: white; padding: 0.6rem 1rem; border-radius: 100px; font-size: 0.7rem; font-weight: 700; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2); opacity: 0; transform: translateY(1rem); transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); pointer-events: auto; border: 1px solid rgba(255,255,255,0.1); display: flex; items-center: center; gap: 8px; }
+        .toast-item.show { opacity: 1; transform: translateY(0); }
+
+        .custom-tooltip { position: fixed; background: #0f172a; color: white; padding: 0.5rem 0.75rem; border-radius: 0.5rem; font-size: 0.65rem; font-weight: 600; pointer-events: none; z-index: 10000; opacity: 0; transition: opacity 0.1s ease; white-space: pre-line; max-width: 280px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); line-height: 1.4; border: 1px solid rgba(255,255,255,0.1); }
     </style>
 </head>
 <body class="text-slate-800">
+
+    <div id="global-tooltip" class="custom-tooltip"></div>
+    <div class="toast-container" id="toast-container"></div>
 
     <nav class="bg-white border-b sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4">
@@ -65,39 +85,103 @@
                             <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd" />
                         </svg>
                     </div>
-                    <span class="font-bold text-lg tracking-tight">Refleksi 360° SDN Perdana</span>
+                    <span class="font-bold text-lg tracking-tight">Refleksi Kinerja SDN Perdana</span>
                 </div>
                 <div class="flex items-center space-x-6 text-sm">
-                    <button onclick="switchTab('form')" id="tab-form" class="tab-active py-5 transition-all">Formulir</button>
-                    <button onclick="switchTab('dashboard')" id="tab-dashboard" class="tab-inactive py-5 transition-all">Analisis Kolektif</button>
-                    <button onclick="switchTab('database')" id="tab-database" class="tab-inactive py-5 transition-all hidden">Database</button>
-                    <button onclick="openLoginModal()" id="btn-login-admin" class="ml-4 px-3 py-1 bg-slate-100 text-slate-500 rounded-md hover:bg-slate-200 transition-colors text-xs font-bold uppercase tracking-wide">Login Admin</button>
-                    <button onclick="logoutAdmin()" id="btn-logout-admin" class="ml-4 px-3 py-1 bg-red-50 text-red-600 rounded-md hover:bg-red-100 transition-colors text-xs font-bold uppercase hidden tracking-wide">Logout</button>
+                    <button onclick="switchTab('form')" id="tab-form" data-tooltip="Isi formulir refleksi kinerja Anda" class="tab-active py-5 transition-all">Formulir</button>
+                    <button onclick="switchTab('dashboard')" id="tab-dashboard" data-tooltip="Lihat analisis kualitatif seluruh responden" class="tab-inactive py-5 transition-all">Analisis Kolektif</button>
+                    <button onclick="switchTab('database')" id="tab-database" data-tooltip="Kelola data rekaman refleksi (Admin)" class="tab-inactive py-5 transition-all hidden">Database</button>
+                    <button onclick="window.openGeminiModal()" id="tab-gemini" data-tooltip="Konfigurasi API Key Gemini AI" class="tab-inactive py-5 transition-all">Gemini</button>
+                    <button onclick="openLoginModal()" id="btn-login-admin" data-tooltip="Masuk sebagai administrator sistem" class="ml-4 px-3 py-1 bg-slate-100 text-slate-500 rounded-md hover:bg-slate-200 transition-colors text-xs font-bold uppercase tracking-wide">Login Admin</button>
+                    <button onclick="logoutAdmin()" id="btn-logout-admin" data-tooltip="Keluar dari sesi administrator" class="ml-4 px-3 py-1 bg-red-50 text-red-600 rounded-md hover:bg-red-100 transition-colors text-xs font-bold uppercase hidden tracking-wide">Logout</button>
                 </div>
             </div>
         </div>
     </nav>
 
+    <!-- 1.0 GEMINI MODAL -->
+    <div id="gemini-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-[450px] overflow-hidden border border-slate-100">
+            <div class="bg-blue-50 p-8 text-center border-b border-blue-100">
+                <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-600 text-white rounded-2xl shadow-xl shadow-blue-200 mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                </div>
+                <h3 class="text-2xl font-black text-slate-800 tracking-tight">Gemini AI Studio</h3>
+                <p class="text-sm text-slate-500 font-medium mt-1">Konfigurasi kunci API untuk analisis otomatis</p>
+            </div>
+            <div class="p-8 space-y-6">
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">API KEY GEMINI</label>
+                    <input type="password" id="google-api-key" oninput="window.saveApiKey()" class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-blue-500 focus:bg-white transition-all font-mono text-sm" placeholder="Masukkan API Key Anda...">
+                    <div class="mt-3 flex justify-between items-center px-1">
+                        <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-[10px] font-bold text-blue-600 hover:text-blue-800 transition-colors underline">Dapatkan API KEY di Google AI Studio</a>
+                        <span class="text-[10px] text-slate-400 font-medium italic">Tersimpan secara lokal</span>
+                    </div>
+                </div>
+                <div class="flex flex-col space-y-3 pt-2">
+                    <button onclick="window.closeGeminiModal()" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-black hover:bg-black transition-all shadow-lg active:scale-[0.98]">Simpan & Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- LOGIN MODAL -->
     <div id="login-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden p-8">
-            <h3 class="text-xl font-bold text-slate-800 mb-6 text-center">Akses Administrator</h3>
-            <div class="space-y-4">
+        <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-[400px] overflow-hidden border border-slate-100">
+            <div class="bg-slate-50 p-8 text-center border-b border-slate-100">
+                <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-600 text-white rounded-2xl shadow-xl shadow-blue-200 mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                </div>
+                <h3 class="text-2xl font-black text-slate-800 tracking-tight">Administrator</h3>
+                <p class="text-sm text-slate-500 font-medium mt-1">Akses khusus manajemen sekolah</p>
+            </div>
+            <div class="p-8 space-y-5">
                 <div class="relative">
-                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Password</label>
-                    <input type="password" id="admin-password" class="w-full px-4 py-3 bg-slate-50 border rounded-xl outline-none focus:border-blue-500" placeholder="••••••••">
-                    <button onclick="togglePasswordVisibility()" class="absolute right-3 top-7 text-slate-400 hover:text-slate-600">
-                        <svg id="eye-icon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-                    </button>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Password Sistem</label>
+                    <div class="relative">
+                        <input type="password" id="admin-password" class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-blue-500 focus:bg-white transition-all font-mono" placeholder="••••••••">
+                        <button onclick="togglePasswordVisibility()" data-tooltip="Tampilkan/sembunyikan password" class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 hover:text-blue-600 transition-colors">
+                            <svg id="eye-icon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
-                <div class="flex items-center space-x-2">
-                    <input type="checkbox" id="remember-me" class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
-                    <label for="remember-me" class="text-sm text-slate-600">Ingat Saya</label>
+                <div class="flex items-center px-1">
+                    <label class="flex items-center space-x-3 cursor-pointer group">
+                        <input type="checkbox" id="remember-me" class="w-5 h-5 rounded-lg border-slate-300 text-blue-600 focus:ring-blue-500 transition-all">
+                        <span class="text-sm text-slate-600 font-semibold group-hover:text-slate-900 transition-colors">Tetap Login di Perangkat Ini</span>
+                    </label>
                 </div>
-                <div class="flex space-x-3 pt-2">
-                    <button onclick="closeLoginModal()" class="flex-1 px-4 py-2 text-slate-500 font-bold hover:bg-slate-50 rounded-xl transition-all">Batal</button>
-                    <button onclick="processLogin()" class="flex-1 bg-blue-700 text-white px-4 py-2 rounded-xl font-bold hover:bg-blue-800 transition-all shadow-lg shadow-blue-100">Login</button>
+                <div class="flex flex-col space-y-3 pt-2">
+                    <button onclick="processLogin()" data-tooltip="Verifikasi password dan masuk" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 active:scale-[0.98]">Masuk ke Database</button>
+                    <button onclick="closeLoginModal()" data-tooltip="Tutup modal login" class="w-full py-3 text-slate-400 font-bold text-sm hover:text-slate-600 transition-colors">Batalkan Akses</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- GENERAL MODAL (POP-UP) -->
+    <div id="general-modal" class="fixed inset-0 z-[110] hidden flex items-center justify-center p-6 general-modal-overlay">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden">
+            <div class="p-6 border-b flex justify-between items-center bg-slate-50">
+                <h3 id="modal-title" class="text-xl font-black text-slate-800 uppercase tracking-tight">Detail Informasi</h3>
+                <button onclick="window.closeGeneralModal()" data-tooltip="Tutup detail informasi" class="p-2 hover:bg-slate-200 rounded-full transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div id="modal-content" class="p-10 overflow-y-auto presentation-text text-slate-700 leading-relaxed no-italic">
+                <!-- Dynamic Content -->
+            </div>
+            <div class="p-6 border-t bg-slate-50 flex justify-end">
+                <button onclick="window.closeGeneralModal()" data-tooltip="Klik untuk menutup modal" class="px-8 py-3 bg-slate-900 text-white font-bold rounded-xl hover:bg-black transition-all">Tutup</button>
             </div>
         </div>
     </div>
@@ -107,7 +191,8 @@
         <!-- SECTION: FORMULIR -->
         <section id="content-form">
             <form id="masterForm" class="space-y-6 pb-20">
-                <!-- BLOK 1-6 IDENTITAS SAMPAI KOMITMEN TETAP SAMA -->
+                
+                <!-- BLOK 1: IDENTITAS -->
                 <details id="sec-1" class="card shadow-sm" open>
                     <summary class="flex items-center justify-between p-6 cursor-pointer hover:bg-slate-50 transition-colors list-none">
                         <div class="flex items-center space-x-4">
@@ -137,62 +222,112 @@
                                     <option>Samsudin</option>
                                 </select>
                             </div>
-                            <button type="button" onclick="window.validateAndNext(1)" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold text-sm hover:bg-blue-700 transition-colors shadow-sm">Lanjut</button>
+                            <button type="button" onclick="window.validateAndNext(1)" data-tooltip="Simpan identitas dan lanjut ke bagian cita-cita" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold text-sm hover:bg-blue-700 transition-colors shadow-sm">Lanjut</button>
                         </div>
                     </div>
                 </details>
 
+                <!-- BLOK 2: CITA-CITA & HARAPAN -->
                 <details id="sec-2" class="card shadow-sm card-disabled">
                     <summary class="flex items-center justify-between p-6 cursor-pointer hover:bg-slate-50 transition-colors list-none">
                         <div class="flex items-center space-x-4">
                             <div id="badge-2" class="status-badge status-incomplete">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" id="icon-2"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" class="hidden" /><text x="7" y="17" font-size="14" font-weight="bold" fill="currentColor" id="num-2">2</text></svg>
                             </div>
-                            <h2 class="font-bold text-slate-700">Mimpi & Harapan Saya terhadap Sekolah</h2>
+                            <h2 class="font-bold text-slate-700">Cita-cita & Harapan Saya terhadap Sekolah</h2>
                         </div>
                     </summary>
                     <div class="p-6 pt-0 border-t border-slate-50 space-y-4">
-                        <label class="block text-sm text-slate-600 mb-3 leading-relaxed font-medium">Tuangkan pandangan jujur Anda mengenai sekolah impian SDN Perdana.</label>
+                        <label class="block text-sm text-slate-600 mb-3 leading-relaxed font-medium">
+                            Tuangkan pandangan jujur Anda mengenai sekolah impian. Menurut Anda, SDN Perdana ini idealnya harus berkembang ke arah mana dan menjadi sekolah yang seperti apa di masa depan?
+                        </label>
                         <div class="relative">
-                            <textarea id="self_vision" class="input-field comp-input" rows="6" data-min="150" placeholder="Ceritakan cita-cita sekolah ideal..." required></textarea>
-                            <div class="char-hint"><span>Minimal 150 Karakter</span><span class="char-count text-slate-400">0 / 150</span></div>
+                            <textarea id="self_vision" class="input-field comp-input" rows="6" data-min="150" placeholder="Uraikan gambaran sekolah ideal menurut versi Anda secara rinci dan futuristik..." required></textarea>
+                            <div class="char-hint"><span>Wajib diisi secara komprehensif (Minimal 150 Karakter)</span><span class="char-count text-slate-400">0 / 150</span></div>
                         </div>
-                        <button type="button" onclick="window.validateAndNext(2)" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold text-sm hover:bg-blue-700 transition-colors shadow-sm">Lanjut</button>
+                        <button type="button" onclick="window.validateAndNext(2)" data-tooltip="Simpan cita-cita dan lanjut ke evaluasi kondisi" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold text-sm hover:bg-blue-700 transition-colors shadow-sm">Lanjut</button>
                     </div>
                 </details>
 
+                <!-- BLOK 3: KONDISI SEKOLAH -->
                 <details id="sec-3" class="card shadow-sm card-disabled border-l-4 border-l-amber-400">
                     <summary class="flex items-center justify-between p-6 cursor-pointer hover:bg-slate-50 transition-colors list-none">
                         <div class="flex items-center space-x-4">
                             <div id="badge-3" class="status-badge status-incomplete">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" id="icon-3"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" class="hidden" /><text x="7" y="17" font-size="14" font-weight="bold" fill="currentColor" id="num-3">3</text></svg>
                             </div>
-                            <h2 class="font-bold text-slate-700">Kondisi Sekolah Saat Ini</h2>
+                            <h2 class="font-bold text-slate-700">Kondisi Sekolah Saat Ini Menurut Saya</h2>
                         </div>
                     </summary>
                     <div class="p-6 pt-0 border-t border-slate-50 space-y-4">
                         <details id="sub-3a" class="sub-accordion group" open>
-                            <summary class="p-4 cursor-pointer list-none bg-emerald-50 rounded-t-lg font-bold text-emerald-700 uppercase text-xs">Aspek Positif</summary>
-                            <div class="p-4 space-y-4 bg-white border border-emerald-100 rounded-b-lg">
-                                <textarea id="cond_good" class="input-field comp-input" data-min="80" rows="3" placeholder="Hal baik..." required></textarea>
-                                <textarea id="cond_good_indicator" class="input-field comp-input" data-min="80" rows="3" placeholder="Indikator..." required></textarea>
-                                <textarea id="cond_good_cause" class="input-field comp-input" data-min="80" rows="3" placeholder="Penyebab..." required></textarea>
-                                <button type="button" onclick="window.validateSub(3, 'a')" class="bg-emerald-600 text-white px-4 py-2 rounded-lg text-xs font-bold">Lanjut</button>
+                            <summary class="flex items-center justify-between p-4 cursor-pointer list-none bg-emerald-50/50 rounded-t-lg">
+                                <span class="text-sm font-bold text-emerald-700 uppercase tracking-wide">Aspek Positif (Kondisi Baik)</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-emerald-500 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                            </summary>
+                            <div class="p-4 space-y-4 bg-white border-x border-b rounded-b-lg border-emerald-100">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 mb-2 uppercase">Kondisi Baik</label>
+                                    <textarea id="cond_good" class="input-field comp-input" data-min="80" rows="3" placeholder="Sebutkan hal-hal yang menurut Anda sudah berjalan dengan sangat baik saat ini..." required></textarea>
+                                    <div class="char-hint"><span>Minimal 80 Karakter</span><span class="char-count">0 / 80</span></div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 mb-2 uppercase">Indikator Kondisi Baik</label>
+                                    <textarea id="cond_good_indicator" class="input-field comp-input" data-min="80" rows="3" placeholder="Apa bukti objektif atau tanda nyata bahwa hal tersebut sudah mencapai hasil optimal?..." required></textarea>
+                                    <div class="char-hint"><span>Minimal 80 Karakter</span><span class="char-count">0 / 80</span></div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 mb-2 uppercase">Penyebab Kondisi Baik</label>
+                                    <textarea id="cond_good_cause" class="input-field comp-input" data-min="80" rows="3" placeholder="Analisislah faktor pendukung utama yang membuat kondisi tersebut menjadi baik..." required></textarea>
+                                    <div class="char-hint"><span>Minimal 80 Karakter</span><span class="char-count">0 / 80</span></div>
+                                </div>
+                                <div class="pt-2">
+                                    <button type="button" onclick="window.validateSub(3, 'a')" data-tooltip="Validasi aspek baik dan lanjut ke aspek buruk" class="bg-emerald-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-emerald-700 transition-all shadow-md">Lanjut ke Aspek Memprihatinkan</button>
+                                </div>
                             </div>
                         </details>
+
                         <details id="sub-3b" class="sub-accordion group sub-disabled">
-                            <summary class="p-4 cursor-pointer list-none bg-rose-50 rounded-t-lg font-bold text-rose-700 uppercase text-xs">Aspek Buruk</summary>
-                            <div class="p-4 space-y-4 bg-white border border-rose-100 rounded-b-lg">
-                                <textarea id="cond_bad" class="input-field comp-input" data-min="80" rows="3" placeholder="Hal buruk..." required></textarea>
-                                <textarea id="cond_bad_indicator" class="input-field comp-input" data-min="80" rows="3" placeholder="Indikator..." required></textarea>
-                                <textarea id="cond_bad_cause" class="input-field comp-input" data-min="80" rows="3" placeholder="Penyebab..." required></textarea>
-                                <button type="button" onclick="window.validateSub(3, 'b')" class="bg-rose-600 text-white px-4 py-2 rounded-lg text-xs font-bold">Selesai</button>
+                            <summary class="flex items-center justify-between p-4 cursor-pointer list-none bg-rose-50/50 rounded-t-lg">
+                                <span class="text-sm font-bold text-rose-700 uppercase tracking-wide">Aspek Memprihatinkan (Tidak Baik)</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-rose-500 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                            </summary>
+                            <div class="p-4 space-y-4 bg-white border-x border-b rounded-b-lg border-rose-100">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 mb-2 uppercase text-rose-700">Kondisi Memprihatinkan / Tidak Baik</label>
+                                    <textarea id="cond_bad" class="input-field comp-input" data-min="80" rows="3" placeholder="Uraikan aspek-aspek di sekolah yang menurut Anda membutuhkan perhatian segera untuk diperbaiki..." required></textarea>
+                                    <div class="char-hint"><span>Minimal 80 Karakter</span><span class="char-count">0 / 80</span></div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 mb-2 uppercase text-rose-700">Indikator Kondisi Memprihatinkan</label>
+                                    <textarea id="cond_bad_indicator" class="input-field comp-input" data-min="80" rows="3" placeholder="Sebutkan bukti nyata atau data objektif yang menunjukkan kondisi tersebut kurang optimal saat ini..." required></textarea>
+                                    <div class="char-hint"><span>Minimal 80 Karakter</span><span class="char-count">0 / 80</span></div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 mb-2 uppercase text-rose-700">Penyebab Kondisi Memprihatinkan</label>
+                                    <textarea id="cond_bad_cause" class="input-field comp-input" data-min="80" rows="3" placeholder="Analisislah akar permasalahan atau faktor-faktor mendalam yang memicu kondisi memprihatinkan ini..." required></textarea>
+                                    <div class="char-hint"><span>Minimal 80 Karakter</span><span class="char-count">0 / 80</span></div>
+                                </div>
+                                <div class="pt-4 border-t border-rose-50">
+                                    <label class="block text-xs font-bold text-slate-500 mb-2 uppercase">Solusi terbaik yang harus dilakukan</label>
+                                    <textarea id="solusi_terbaik" class="input-field comp-input" data-min="80" rows="3" placeholder="Rumuskan langkah strategis utama yang menurut Anda paling efektif untuk menuntaskan masalah tersebut..." required></textarea>
+                                    <div class="char-hint"><span>Minimal 80 Karakter</span><span class="char-count">0 / 80</span></div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 mb-2 uppercase">Alternatif lainnya sebagai solusi</label>
+                                    <textarea id="solusi_alternatif" class="input-field comp-input" data-min="80" rows="3" placeholder="Berikan opsi solusi pendukung atau strategi cadangan guna memperkuat efektivitas langkah utama..." required></textarea>
+                                    <div class="char-hint"><span>Minimal 80 Karakter</span><span class="char-count">0 / 80</span></div>
+                                </div>
+                                <div class="pt-2">
+                                    <button type="button" onclick="window.validateSub(3, 'b')" data-tooltip="Validasi aspek buruk dan lanjut ke refleksi personal" class="bg-rose-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-rose-700 transition-all shadow-md">Selesai Evaluasi Kondisi</button>
+                                </div>
                             </div>
                         </details>
-                        <div id="btn-sec-3-final" class="hidden pt-2"><button type="button" onclick="window.validateAndNext(3)" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold text-sm">Lanjut</button></div>
+                        <div id="btn-sec-3-final" class="hidden pt-2"><button type="button" onclick="window.validateAndNext(3)" data-tooltip="Simpan evaluasi dan lanjut" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold text-sm hover:bg-blue-700 shadow-sm">Lanjut</button></div>
                     </div>
                 </details>
 
+                <!-- BLOK 4: REFLEKSI KINERJA -->
                 <details id="sec-4" class="card shadow-sm card-disabled">
                     <summary class="flex items-center justify-between p-6 cursor-pointer hover:bg-slate-50 transition-colors list-none">
                         <div class="flex items-center space-x-4">
@@ -203,30 +338,49 @@
                         </div>
                     </summary>
                     <div class="p-6 pt-0 border-t border-slate-50 space-y-6">
-                        <textarea id="self_strength" class="input-field comp-input" data-min="100" rows="4" placeholder="Kelebihan..." required></textarea>
-                        <textarea id="self_weakness" class="input-field comp-input" data-min="100" rows="4" placeholder="Kelemahan..." required></textarea>
-                        <textarea id="self_effort" class="input-field comp-input" data-min="100" rows="4" placeholder="Upaya..." required></textarea>
-                        <button type="button" onclick="window.validateAndNext(4)" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold text-sm">Lanjut</button>
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">Apa kekuatan dan kontribusi terbaik saya bagi sekolah selama ini? Apa yang sudah saya berikan secara maksimal?</label>
+                            <textarea id="self_strength" class="input-field comp-input" data-min="100" rows="4" placeholder="Uraikan pencapaian positif, peran aktif, serta dedikasi terbaik yang telah Anda berikan bagi sekolah..." required></textarea>
+                            <div class="char-hint"><span>Minimal 100 Karakter</span><span class="char-count">0 / 100</span></div>
+                        </div>
+                        <div class="pt-4 border-t border-slate-100">
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">Secara jujur, kekurangan, kendala, atau kesalahan yang saya alami dalam bekerja adalah ...</label>
+                            <textarea id="self_weakness" class="input-field comp-input" data-min="100" rows="4" placeholder="Evaluasi tantangan personal, hambatan teknis, atau area yang Anda rasa masih memerlukan perbaikan..." required></textarea>
+                            <div class="char-hint"><span>Minimal 100 Karakter</span><span class="char-count">0 / 100</span></div>
+                        </div>
+                        <div class="pt-4 border-t border-slate-100">
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">Upaya apa yang akan saya lakukan untuk mengatasi hambatan tersebut?</label>
+                            <textarea id="self_effort" class="input-field comp-input" data-min="100" rows="4" placeholder="Sebutkan rencana nyata atau langkah pengembangan diri untuk meningkatkan kualitas kinerja ke depan..." required></textarea>
+                            <div class="char-hint"><span>Minimal 100 Karakter</span><span class="char-count">0 / 100</span></div>
+                        </div>
+                        <button type="button" onclick="window.validateAndNext(4)" data-tooltip="Simpan refleksi personal dan lanjut ke penilaian rekan" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold text-sm hover:bg-blue-700 shadow-sm">Lanjut</button>
                     </div>
                 </details>
 
+                <!-- BLOK 5: REFLEKSI REKAN SEJAWAT (360°) -->
                 <details id="sec-5" class="card shadow-sm card-disabled">
                     <summary class="flex items-center justify-between p-6 cursor-pointer hover:bg-slate-50 transition-colors list-none">
                         <div class="flex items-center space-x-4">
                             <div id="badge-5" class="status-badge status-incomplete">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" id="icon-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" class="hidden" /><text x="7" y="17" font-size="14" font-weight="bold" fill="currentColor" id="num-5">5</text></svg>
                             </div>
-                            <h2 class="font-bold text-slate-700">Refleksi Rekan Sejawat</h2>
+                            <h2 class="font-bold text-slate-700">Refleksi Rekan Sejawat (360°)</h2>
                         </div>
                     </summary>
                     <div class="p-6 pt-0 border-t border-slate-50">
-                        <div id="peer-review-list" class="space-y-2"></div>
+                        <p class="text-[11px] text-slate-500 mb-6 italic leading-relaxed font-medium">
+                            Semua rekan wajib dinilai secara berurutan dengan jawaban komprehensif.
+                        </p>
+                        <div id="peer-review-list" class="space-y-2">
+                            <!-- JS Generated -->
+                        </div>
                         <div id="btn-sec-5-final" class="mt-8 pt-4 border-t hidden">
-                             <button type="button" onclick="window.validateAndNext(5)" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold text-sm">Lanjut</button>
+                             <button type="button" onclick="window.validateAndNext(5)" data-tooltip="Lanjut ke bagian komitmen akhir" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold text-sm hover:bg-blue-700 shadow-sm">Lanjut ke Bagian Akhir</button>
                         </div>
                     </div>
                 </details>
 
+                <!-- BLOK 6: KOMITMEN & KONSEKUENSI SAYA -->
                 <details id="sec-6" class="card shadow-sm card-disabled">
                     <summary class="flex items-center justify-between p-6 cursor-pointer hover:bg-slate-50 transition-colors list-none">
                         <div class="flex items-center space-x-4">
@@ -237,10 +391,23 @@
                         </div>
                     </summary>
                     <div class="p-6 pt-0 border-t border-slate-50 space-y-6">
-                        <textarea id="final_commitment" class="input-field comp-input" data-min="100" rows="4" required></textarea>
-                        <textarea id="final_consequence" class="input-field border-red-200 bg-white comp-input" data-min="70" rows="4" placeholder="Konsekuensi..." required></textarea>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Komitmen Saya</label>
+                            <textarea id="final_commitment" class="input-field comp-input" data-min="100" rows="4" required placeholder="Tuliskan janji dedikasi dan kesungguhan Anda dalam meningkatkan mutu pendidikan serta budaya kerja di lingkungan SDN Perdana..."></textarea>
+                            <div class="char-hint"><span>Minimal 100 Karakter</span><span class="char-count">0 / 100</span></div>
+                        </div>
+                        <div class="bg-red-50 p-6 rounded-xl border border-red-100 shadow-inner">
+                            <label class="block text-xs font-bold text-red-900 mb-2 tracking-wider uppercase">Pernyataan Konsekuensi Saya</label>
+                            <p class="text-xs text-red-700 mb-3 italic">
+                                "Apabila saya tidak memenuhi komitmen kerja tersebut di atas, maka saya secara sadar bersedia menerima konsekuensi berupa:"
+                            </p>
+                            <textarea id="final_consequence" class="input-field border-red-200 bg-white comp-input" data-min="70" rows="4" placeholder="Sebutkan konsekuensi tegas secara profesional (misal: teguran tertulis, sanksi administratif, nilai kinerja di bawah ekspektasi, mutasi, atau bentuk pertanggungjawaban lainnya)..." required></textarea>
+                            <div class="char-hint"><span class="text-red-600">Min 70 Karakter</span><span class="char-count">0 / 70</span></div>
+                        </div>
                         <div class="pt-6">
-                            <button type="submit" id="btn-submit-all" class="w-full bg-slate-900 text-white font-bold py-5 rounded-xl shadow-xl hover:bg-black transition-all text-lg tracking-wide uppercase">Simpan Hasil Refleksi</button>
+                            <button type="submit" id="btn-submit-all" data-tooltip="Simpan seluruh data refleksi Anda secara permanen" class="w-full bg-slate-900 text-white font-bold py-5 rounded-xl shadow-xl hover:bg-black transition-all text-lg tracking-wide uppercase flex items-center justify-center space-x-2">
+                                <span>Simpan Seluruh Hasil Refleksi</span>
+                            </button>
                         </div>
                     </div>
                 </details>
@@ -248,91 +415,58 @@
         </section>
 
         <!-- DASHBOARD (ANALISIS KOLEKTIF) -->
-        <section id="content-dashboard" class="hidden space-y-12 pb-32">
-            <!-- Summary Card -->
-            <div class="card p-10 bg-gradient-to-br from-blue-700 to-indigo-900 text-white shadow-2xl relative overflow-hidden">
-                <div class="absolute top-0 right-0 p-4 opacity-10">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-32 w-32" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
-                </div>
-                <h4 class="text-base font-bold opacity-80 uppercase tracking-widest mb-2">Partisipasi Kolektif SDN Perdana</h4>
-                <div class="flex items-center space-x-6">
-                    <span id="stat-count" class="text-8xl font-black">0</span>
-                    <div class="text-xl font-semibold opacity-90 leading-tight">Pegawai telah memberikan<br>kontribusi refleksi mereka.</div>
+        <section id="content-dashboard" class="hidden space-y-6 pb-20">
+            <!-- RESPONDEN BLOCK UI -->
+            <div class="flex justify-center">
+                <div id="responden-stats-card" onclick="window.openRespondentModal()" data-tooltip="" class="card p-5 border-l-4 border-amber-500 w-full max-w-[240px] flex flex-col items-center justify-center cursor-pointer hover:shadow-lg transition-all duration-300 hover:scale-[1.02]">
+                    <h4 class="text-base font-black text-slate-400 uppercase tracking-widest no-italic mb-1">Responden</h4>
+                    <div class="flex items-baseline space-x-2">
+                        <span id="stat-count" class="text-4xl font-black text-slate-800 leading-none">0</span>
+                    </div>
                 </div>
             </div>
 
-            <!-- Analysis Container -->
-            <div id="collective-analysis-container" class="space-y-12">
-                <!-- JS Populated -->
+            <div id="collective-analysis-container" class="space-y-8">
+                <!-- Data akan diisi melalui JS -->
             </div>
         </section>
 
         <!-- DATABASE (ADMIN ONLY) -->
-        <section id="content-database" class="hidden space-y-6">
-            <!-- API KEY SETTINGS -->
-            <div class="card p-6 bg-slate-900 text-white shadow-lg border-none">
-                <h4 class="text-xs font-black uppercase tracking-widest text-slate-400 mb-4">Pengaturan Analis AI</h4>
-                <div class="flex flex-col md:flex-row gap-4">
-                    <div class="flex-1">
-                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Gemini API KEY</label>
-                        <input type="password" id="gemini-api-key" class="w-full bg-slate-800 border-slate-700 text-white rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500" placeholder="Masukkan Kunci API untuk mengaktifkan Tombol Generate AI">
-                    </div>
-                    <div class="flex items-end">
-                        <button onclick="saveAPIKey()" class="bg-blue-600 px-6 py-2 rounded-lg font-bold text-sm hover:bg-blue-500 transition-all">Simpan Konfigurasi</button>
-                    </div>
-                </div>
-                <p class="text-[9px] text-slate-500 mt-2">Dapatkan kunci API secara gratis di <a href="https://aistudio.google.com/" target="_blank" class="text-blue-400 underline">Google AI Studio</a>.</p>
-            </div>
-
+        <section id="content-database" class="hidden space-y-4">
             <div class="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border">
                 <div class="flex space-x-2">
-                    <button onclick="window.exportToExcel()" class="px-4 py-2 bg-emerald-600 text-white rounded-lg text-xs font-bold uppercase hover:bg-emerald-700 shadow-md">Ekspor XLSX</button>
-                    <button onclick="window.exportToPDF()" class="px-4 py-2 bg-rose-600 text-white rounded-lg text-xs font-bold uppercase hover:bg-rose-700 shadow-md">Ekspor PDF</button>
+                    <button onclick="window.exportToExcel()" data-tooltip="Ekspor seluruh rekaman database ke format Excel" class="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-[10px] font-bold uppercase hover:bg-emerald-700">Ekspor XLSX</button>
+                    <button onclick="window.exportToPDF()" data-tooltip="Ekspor data ke dokumen PDF portabel" class="px-3 py-1.5 bg-rose-600 text-white rounded-lg text-[10px] font-bold uppercase hover:bg-rose-700">Ekspor PDF</button>
+                    <button onclick="window.deleteSelected();" id="btn-bulk-delete" data-tooltip="Hapus baris data yang telah Anda pilih" class="px-3 py-1.5 bg-red-600 text-white rounded-lg text-[10px] font-bold uppercase hover:bg-red-700 hidden">Hapus Terpilih</button>
                 </div>
-                <div class="flex space-x-2">
-                    <button onclick="window.backupJSON()" class="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg text-[10px] font-bold hover:bg-blue-200">Backup JSON</button>
+                <div class="flex space-x-2 text-[10px]">
+                    <button onclick="window.backupJSON()" data-tooltip="Buat cadangan database dalam format JSON mentah" class="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg font-bold uppercase hover:bg-blue-200">Backup JSON</button>
                     <input type="file" id="restore-input" class="hidden" onchange="window.restoreJSON(event)">
-                    <button onclick="document.getElementById('restore-input').click()" class="px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg text-[10px] hover:bg-slate-200">Restore</button>
-                    <button onclick="window.clearAll()" class="px-3 py-1.5 bg-red-100 text-red-700 rounded-lg text-[10px] font-bold hover:bg-red-200">Hapus Cloud</button>
+                    <button onclick="document.getElementById('restore-input').click()" data-tooltip="Kembalikan data dari file cadangan JSON" class="px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg font-bold uppercase hover:bg-slate-200">Restore</button>
+                    <button onclick="window.clearAll()" data-tooltip="Hapus permanen seluruh isi database cloud" class="px-3 py-1.5 bg-red-100 text-red-700 rounded-lg font-bold uppercase hover:bg-red-200">Hapus Semua</button>
                 </div>
             </div>
 
             <div class="card shadow-sm border bg-white overflow-hidden">
                 <div class="db-table-container">
                     <table id="db-raw-table" class="w-full text-left text-[10px]">
-                        <thead class="bg-slate-50 uppercase tracking-tighter">
-                            <tr>
-                                <th class="p-3 border-b">No</th>
-                                <th class="p-3 border-b">Timestamp</th>
-                                <th class="p-3 border-b">Responden</th>
-                                <th class="p-3 border-b">Mimpi Sekolah</th>
-                                <th class="p-3 border-b">Kondisi Baik</th>
-                                <th class="p-3 border-b">Indikator Baik</th>
-                                <th class="p-3 border-b">Penyebab Baik</th>
-                                <th class="p-3 border-b">Kondisi Buruk</th>
-                                <th class="p-3 border-b">Indikator Buruk</th>
-                                <th class="p-3 border-b">Penyebab Buruk</th>
-                                <th class="p-3 border-b">Kelebihan Diri</th>
-                                <th class="p-3 border-b">Kelemahan Diri</th>
-                                <th class="p-3 border-b">Upaya Personal</th>
-                                <th class="p-3 border-b">Komitmen</th>
-                                <th class="p-3 border-b">Konsekuensi</th>
-                            </tr>
+                        <thead class="uppercase tracking-tighter">
+                            <tr id="db-header"></tr>
                         </thead>
                         <tbody id="db-body" class="divide-y divide-slate-100"></tbody>
                     </table>
                 </div>
             </div>
         </section>
+
     </main>
 
-    <!-- Firebase & Analysis Scripts -->
+    <!-- Firebase Integration -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Global Variables
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
             apiKey: "AIzaSyC6IXCk6EXm0ndord8Is6cRZf_mG2MY5UM",
             authDomain: "kedinasan-d9051.firebaseapp.com",
@@ -342,31 +476,83 @@
             appId: "1:488517479224:web:57ed244cf69e2a010c6fcd"
         };
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'sdn-perdana-app';
-        
-        let apiKey = localStorage.getItem('sdn_gemini_api_key') || "";
+
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
         const employees = [
-            { name: "Neneng Imas Kurnia", prefix: "Ibu" }, { name: "Ujang Edi Brata", prefix: "Bapak" },
-            { name: "Asep Ruhbi", prefix: "Bapak" }, { name: "Uju Juaenah", prefix: "Ibu" },
-            { name: "Bahtiar Arifin", prefix: "Bapak" }, { name: "Cupang Sulastri", prefix: "Ibu" },
-            { name: "Kamjah", prefix: "Bapak" }, { name: "Iis Isnayah", prefix: "Ibu" },
-            { name: "Rini Lestari", prefix: "Ibu" }, { name: "Novianti", prefix: "Ibu" },
-            { name: "Ahmad Sanusi", prefix: "Bapak" }, { name: "Samsudin", prefix: "Bapak" }
+            { name: "Neneng Imas Kurnia", prefix: "Ibu" },
+            { name: "Ujang Edi Brata", prefix: "Bapak" },
+            { name: "Asep Ruhbi", prefix: "Bapak" },
+            { name: "Uju Juaenah", prefix: "Ibu" },
+            { name: "Bahtiar Arifin", prefix: "Bapak" },
+            { name: "Cupang Sulastri", prefix: "Ibu" },
+            { name: "Kamjah", prefix: "Bapak" },
+            { name: "Iis Isnayah", prefix: "Ibu" },
+            { name: "Rini Lestari", prefix: "Ibu" },
+            { name: "Novianti", prefix: "Ibu" },
+            { name: "Ahmad Sanusi", prefix: "Bapak" },
+            { name: "Samsudin", prefix: "Bapak" }
         ];
 
         let database = [];
         let isAdmin = localStorage.getItem('admin_sdn_active') === 'true';
+        let currentSort = { key: 'createdAt', direction: 'desc' };
+        let selectedIds = new Set();
         const reflectionsCollection = collection(db, 'artifacts', appId, 'public', 'data', 'reflections');
+
+        // TOAST NOTIFICATION UTILITY
+        window.showToast = (msg) => {
+            const container = document.getElementById('toast-container');
+            const item = document.createElement('div');
+            item.className = 'toast-item';
+            item.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-blue-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" /></svg> ${msg}`;
+            container.appendChild(item);
+            requestAnimationFrame(() => item.classList.add('show'));
+            setTimeout(() => {
+                item.classList.remove('show');
+                setTimeout(() => item.remove(), 200);
+            }, 1200);
+        };
+
+        // CUSTOM TOOLTIP LOGIC
+        window.initTooltips = () => {
+            const tooltip = document.getElementById('global-tooltip');
+            const targets = document.querySelectorAll('[data-tooltip]');
+            targets.forEach(target => {
+                target.onmouseenter = (e) => {
+                    const text = target.getAttribute('data-tooltip');
+                    if (!text) return;
+                    tooltip.textContent = text;
+                    tooltip.style.opacity = '1';
+                };
+                target.onmousemove = (e) => {
+                    const x = e.clientX + 15;
+                    const y = e.clientY + 15;
+                    const tw = tooltip.offsetWidth;
+                    const th = tooltip.offsetHeight;
+                    const vw = window.innerWidth;
+                    const vh = window.innerHeight;
+                    tooltip.style.left = (x + tw > vw ? e.clientX - tw - 15 : x) + 'px';
+                    tooltip.style.top = (y + th > vh ? e.clientY - th - 15 : y) + 'px';
+                };
+                target.onmouseleave = () => {
+                    tooltip.style.opacity = '0';
+                };
+            });
+        };
 
         const initAuth = async () => {
             try {
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     await signInWithCustomToken(auth, __initial_auth_token);
-                } else { await signInAnonymously(auth); }
-            } catch (error) { console.error("Auth error:", error); }
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                console.error("Auth error:", error);
+            }
         };
 
         onAuthStateChanged(auth, (user) => {
@@ -374,47 +560,107 @@
                 onSnapshot(reflectionsCollection, (snapshot) => {
                     database = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     renderDashboard();
-                    if (!document.getElementById('content-database').classList.contains('hidden')) renderDatabase();
-                }, (error) => { console.error("Firestore sync error:", error); });
+                    renderDatabase();
+                    window.initTooltips();
+                }, (error) => {
+                    console.error("Firestore sync error:", error);
+                });
             }
         });
 
         window.onload = async () => {
             await initAuth();
             if (isAdmin) applyAdminState();
-            if (apiKey) document.getElementById('gemini-api-key').value = apiKey;
             resetPrefixedInputs();
+            const savedKey = localStorage.getItem('sdn_perdana_gemini_key');
+            if (savedKey) {
+                const input = document.getElementById('google-api-key');
+                if (input) input.value = savedKey;
+            }
             renderDashboard();
+            renderDatabase();
+            window.initTooltips();
         };
 
-        window.saveAPIKey = () => {
-            const val = document.getElementById('gemini-api-key').value.trim();
-            if (val) {
-                apiKey = val;
-                localStorage.setItem('sdn_gemini_api_key', val);
-                showMessage("Kunci API berhasil disimpan. Tombol Generate AI kini aktif.");
+        window.saveApiKey = () => {
+            const val = document.getElementById('google-api-key').value.trim();
+            localStorage.setItem('sdn_perdana_gemini_key', val);
+        };
+
+        window.openGeminiModal = () => {
+            document.getElementById('gemini-modal').classList.remove('hidden');
+        };
+
+        window.closeGeminiModal = () => {
+            document.getElementById('gemini-modal').classList.add('hidden');
+        };
+
+        window.openRespondentModal = () => {
+            const modal = document.getElementById('general-modal');
+            const title = document.getElementById('modal-title');
+            const content = document.getElementById('modal-content');
+            title.textContent = "Daftar Responden";
+            const names = database.map(d => d.user).sort();
+            if (names.length === 0) {
+                content.innerHTML = "<p class='text-slate-400 italic'>Belum ada responden yang mengisi.</p>";
+            } else {
+                content.innerHTML = `<div class='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                    ${names.map((name, i) => `<div class='flex items-center space-x-3 p-3 bg-slate-50 rounded-xl border border-slate-100'>
+                        <span class='text-xs font-black text-slate-300 w-6'>${i+1}.</span>
+                        <span class='font-bold text-slate-800'>${name}</span>
+                    </div>`).join('')}
+                </div>`;
             }
+            modal.classList.remove('hidden');
+        };
+
+        window.openSynthesisModal = (titleStr, text) => {
+            const modal = document.getElementById('general-modal');
+            const title = document.getElementById('modal-title');
+            const content = document.getElementById('modal-content');
+            title.textContent = "Detail " + titleStr;
+            content.innerHTML = `<div class='bg-blue-50 p-8 rounded-3xl border-2 border-blue-100 text-2xl text-slate-800 leading-relaxed font-medium'>${text}</div>`;
+            modal.classList.remove('hidden');
+        };
+
+        window.closeGeneralModal = () => {
+            document.getElementById('general-modal').classList.add('hidden');
         };
 
         function resetPrefixedInputs() {
             const fc = document.getElementById('final_commitment');
-            if (fc) fc.value = "Saya berjanji ";
+            if (fc) fc.value = "";
         }
 
-        window.openLoginModal = () => document.getElementById('login-modal').classList.remove('hidden');
-        window.closeLoginModal = () => document.getElementById('login-modal').classList.add('hidden');
+        window.openLoginModal = () => {
+            document.getElementById('login-modal').classList.remove('hidden');
+        }
+        window.closeLoginModal = () => {
+            document.getElementById('login-modal').classList.add('hidden');
+        }
         window.togglePasswordVisibility = () => {
             const pwd = document.getElementById('admin-password');
-            pwd.type = pwd.type === "password" ? "text" : "password";
+            const icon = document.getElementById('eye-icon');
+            if (pwd.type === "password") {
+                pwd.type = "text";
+                icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />`;
+            } else {
+                pwd.type = "password";
+                icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />`;
+            }
         };
 
         window.processLogin = () => {
-            if (document.getElementById('admin-password').value === "EdiBrata#1") {
+            const pass = document.getElementById('admin-password').value;
+            if (pass === "EdiBrata#1") {
                 isAdmin = true;
-                if (document.getElementById('remember-me').checked) localStorage.setItem('admin_sdn_active', 'true');
+                localStorage.setItem('admin_sdn_active', 'true');
                 applyAdminState();
                 window.closeLoginModal();
-            } else { showMessage("Password Salah."); }
+                window.showToast('Login Admin Berhasil');
+            } else { 
+                window.showToast('Password Admin Salah!');
+            }
         };
 
         function applyAdminState() {
@@ -430,183 +676,15 @@
             document.getElementById('btn-sec-5-final').classList.remove('hidden');
         }
 
-        window.logoutAdmin = () => { localStorage.removeItem('admin_sdn_active'); location.reload(); };
-
-        // Gemini AI Implementation
-        async function fetchAIAnalysis(data, sectionName) {
-            if (!apiKey) return "API KEY Belum dikonfigurasi. Harap login admin dan masukkan Gemini API KEY di tab Database.";
-
-            const systemPrompt = "Anda adalah konsultan pendidikan profesional. Tugas Anda adalah memberikan analisis deskriptif yang mendalam dan solutif terhadap data refleksi SDN Perdana. Gunakan bahasa Indonesia yang formal, berwibawa, dan memotivasi.";
-            const userQuery = `Analisislah data kolektif untuk bagian "${sectionName}" berikut:\n\n${JSON.stringify(data)}\n\nTugas:\n1. Jelaskan pola atau aspirasi umum.\n2. Berikan kesimpulan mendalam.\n3. Berikan saran tindak lanjut strategis.\nSajikan jawaban dalam paragraf yang rapi dan font normal (bukan miring).`;
-
-            const payload = {
-                contents: [{ parts: [{ text: userQuery }] }],
-                systemInstruction: { parts: [{ text: systemPrompt }] }
-            };
-
-            let delay = 1000;
-            for (let i = 0; i < 5; i++) {
-                try {
-                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-                    
-                    if (response.ok) {
-                        const result = await response.json();
-                        return result.candidates?.[0]?.content?.parts?.[0]?.text || "Maaf, AI gagal menyusun narasi.";
-                    }
-                } catch (e) {}
-                await new Promise(r => setTimeout(r, delay));
-                delay *= 2;
-            }
-            return "Koneksi ke layanan AI terputus. Pastikan Kunci API valid.";
-        }
-
-        window.triggerAI = async (id, sectionKey, sectionName) => {
-            const display = document.getElementById(`ai-box-${id}`);
-            display.innerHTML = `
-                <div class="p-8 flex items-center justify-center space-x-4 text-blue-600 bg-white rounded-2xl border-2 border-blue-100 shadow-sm">
-                    <svg class="animate-spin h-8 w-8" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                    <span class="text-xl font-bold">AI sedang menyusun analisis deskriptif untuk SDN Perdana...</span>
-                </div>`;
-            
-            let rawData = id.startsWith('360') ? sectionKey : database.map(d => {
-                if (typeof sectionKey === 'string') return d[sectionKey];
-                return sectionKey.map(k => k.split('.').reduce((o, i) => o[i], d)).join(" | ");
-            });
-
-            const analysis = await fetchAIAnalysis(rawData, sectionName);
-            display.innerHTML = `
-                <div class="p-10 bg-gradient-to-br from-white to-blue-50 rounded-2xl border-2 border-blue-200 shadow-xl presentation-text">
-                    <div class="font-black text-blue-800 mb-6 flex items-center presentation-title uppercase tracking-tighter">
-                        <svg class="h-8 w-8 mr-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zM7 10a1 1 0 01-1 1H5a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM9 11l.012 2.012c.03.762.534 1.456 1.251 1.737L13 16l-2.737.749a2.001 2.001 0 00-1.251 1.737L9 20.5l-.012-2.012a2.001 2.001 0 00-1.251-1.737L5 16l2.737-.749a2.001 2.001 0 001.251-1.737L9 11z"/></svg>
-                        Hasil Analisis Strategis AI (Deskriptif)
-                    </div>
-                    <div class="whitespace-pre-wrap">${analysis}</div>
-                </div>`;
+        window.logoutAdmin = () => {
+            localStorage.removeItem('admin_sdn_active');
+            setTimeout(() => location.reload(), 100);
         };
 
-        window.renderDashboard = () => {
-            document.getElementById('stat-count').textContent = database.length;
-            const container = document.getElementById('collective-analysis-container');
-            if (!container) return;
-            container.innerHTML = "";
-            if (database.length === 0) return;
-
-            const sections = [
-                { id: "vision", title: "Mimpi & Harapan Kolektif", key: "vision" },
-                { id: "cond", title: "Potret Kondisi Sekolah (Lengkap)", keys: ["condition.good", "condition.good_ind", "condition.good_cause", "condition.bad", "condition.bad_ind", "condition.bad_cause"] },
-                { id: "personal", title: "Refleksi Kinerja Individu Kolektif", keys: ["self.strength", "self.weakness", "self.effort"] },
-                { id: "comm", title: "Komitmen & Konsekuensi Kolektif", keys: ["commitment", "consequence"] }
-            ];
-
-            sections.forEach(s => {
-                const acc = document.createElement('details');
-                acc.className = "card border shadow-lg group";
-                acc.innerHTML = `
-                    <summary class="flex items-center justify-between p-8 cursor-pointer bg-white group-open:bg-slate-50 transition-all border-l-8 border-blue-700">
-                        <div class="flex items-center space-x-6">
-                            <div class="w-14 h-14 rounded-2xl bg-blue-100 flex items-center justify-center text-blue-700 shadow-sm">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
-                            </div>
-                            <h3 class="presentation-title uppercase tracking-tight">${s.title}</h3>
-                        </div>
-                        <svg class="h-8 w-8 text-slate-400 group-open:rotate-180 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
-                    </summary>
-                    <div class="p-10 pt-4 border-t space-y-8 bg-slate-50/20">
-                        <div class="space-y-6">
-                            ${database.map((entry, idx) => `
-                                <div class="p-8 bg-white border-2 border-slate-100 rounded-3xl shadow-sm presentation-text">
-                                    <div class="flex items-center space-x-2 mb-6">
-                                        <span class="px-4 py-1.5 bg-slate-900 rounded-full text-xs font-black text-white uppercase tracking-widest">Responden #${idx + 1}</span>
-                                    </div>
-                                    <div class="space-y-6">
-                                        ${s.key ? `<div class="text-slate-800 leading-relaxed font-medium">"${entry[s.key]}"</div>` : s.keys.map(k => {
-                                            const v = k.split('.').reduce((o, i) => o[i], entry);
-                                            const label = k.split('.').pop().replace('_', ' ').toUpperCase();
-                                            return `<div class="p-6 bg-slate-50 rounded-2xl border border-slate-100 shadow-inner"><span class="presentation-label block mb-3">${label}</span><div class="text-slate-800 leading-relaxed font-medium">"${v}"</div></div>`;
-                                        }).join("")}
-                                    </div>
-                                </div>
-                            `).join("")}
-                        </div>
-                        <div id="ai-box-${s.id}" class="mt-16 pt-12 border-t-4 border-blue-100 border-dotted">
-                            <button onclick="window.triggerAI('${s.id}', ${JSON.stringify(s.key || s.keys)}, '${s.title}')" class="w-full flex items-center justify-center px-8 py-6 bg-blue-700 text-white rounded-3xl text-xl font-black hover:bg-blue-800 shadow-2xl shadow-blue-200 ai-glow transition-all uppercase tracking-widest">
-                                <svg class="h-8 w-8 mr-4" fill="currentColor" viewBox="0 0 20 20"><path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707 7z" /></svg>
-                                Analisis Deskriptif Strategis AI
-                            </button>
-                        </div>
-                    </div>
-                `;
-                container.appendChild(acc);
-            });
-
-            // Refleksi 360 Presentation
-            const peerHeading = document.createElement('div');
-            peerHeading.className = "pt-20 pb-8 border-t-2 mt-20";
-            peerHeading.innerHTML = `<h3 class="text-5xl font-black text-slate-900 uppercase tracking-tighter">Analisis Refleksi 360°</h3>
-            <p class="text-xl text-slate-400 font-bold uppercase tracking-widest mt-4">Kumpulan umpan balik objektif kolektif per pegawai</p>`;
-            container.appendChild(peerHeading);
-            
-            employees.forEach(emp => {
-                const reviews = database.map(d => d.peerReviews?.[emp.name]).filter(r => r && r.strength);
-                if (reviews.length > 0) {
-                    const id = emp.name.replace(/\s+/g, '_');
-                    const acc360 = document.createElement('details');
-                    acc360.className = "card border shadow-xl mb-8 group";
-                    acc360.innerHTML = `
-                        <summary class="flex items-center justify-between p-8 cursor-pointer bg-white group-open:bg-emerald-50 transition-all border-l-8 border-emerald-600">
-                            <div class="flex items-center space-x-6">
-                                <div class="w-16 h-16 rounded-2xl bg-emerald-600 flex items-center justify-center text-white font-black text-2xl shadow-xl shadow-emerald-100">${emp.name.split(' ').map(n=>n[0]).join('')}</div>
-                                <div>
-                                    <div class="text-2xl font-black text-slate-800">${emp.name}</div>
-                                    <div class="text-sm font-bold text-emerald-600 uppercase tracking-widest mt-1">${reviews.length} Rekan Sejawat Telah Memberi Masukan</div>
-                                </div>
-                            </div>
-                            <svg class="h-10 w-10 text-slate-400 group-open:rotate-180 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
-                        </summary>
-                        <div class="p-10 pt-8 border-t space-y-12 bg-white">
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
-                                <div class="space-y-6">
-                                    <h5 class="presentation-label bg-emerald-100 px-6 py-2 rounded-2xl inline-block shadow-sm">Kelebihan</h5>
-                                    <div class="space-y-4 presentation-text leading-relaxed font-medium">${reviews.map(r => `<div class="p-6 bg-emerald-50/40 rounded-3xl border-l-4 border-emerald-500 shadow-sm leading-relaxed text-slate-800">"${r.strength}"</div>`).join("")}</div>
-                                </div>
-                                <div class="space-y-6">
-                                    <h5 class="presentation-label bg-rose-100 text-rose-700 px-6 py-2 rounded-2xl inline-block shadow-sm">Kelemahan</h5>
-                                    <div class="space-y-4 presentation-text leading-relaxed font-medium">${reviews.map(r => `<div class="p-6 bg-rose-50/40 rounded-3xl border-l-4 border-rose-500 shadow-sm leading-relaxed text-slate-800">"${r.weakness}"</div>`).join("")}</div>
-                                </div>
-                                <div class="space-y-6">
-                                    <h5 class="presentation-label bg-blue-100 text-blue-700 px-6 py-2 rounded-2xl inline-block shadow-sm">Harapan</h5>
-                                    <div class="space-y-4 presentation-text leading-relaxed font-medium">${reviews.map(r => `<div class="p-6 bg-blue-50/40 rounded-3xl border-l-4 border-blue-500 shadow-sm leading-relaxed text-slate-800">"${r.hope}"</div>`).join("")}</div>
-                                </div>
-                            </div>
-                            <div id="ai-box-360-${id}" class="mt-16 pt-12 border-t-4 border-emerald-100 border-dotted">
-                                <button onclick="window.triggerAI('360-${id}', ${JSON.stringify(reviews)}, 'Analisis Profil Profesional Untuk ${emp.name}')" class="w-full flex items-center justify-center px-8 py-6 bg-emerald-600 text-white rounded-3xl text-xl font-black hover:bg-emerald-700 shadow-2xl shadow-emerald-200 ai-glow transition-all uppercase tracking-widest">
-                                    Simpulkan Profil Profesional ${emp.name.split(' ')[0]} via AI
-                                </button>
-                            </div>
-                        </div>
-                    `;
-                    container.appendChild(acc360);
-                }
-            });
-        };
-
-        // Shared Functions
-        window.showMessage = (msg) => {
-            const div = document.createElement('div');
-            div.className = "fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white px-8 py-4 rounded-2xl shadow-2xl z-[200] font-bold text-sm tracking-wide";
-            div.textContent = msg;
-            document.body.appendChild(div);
-            setTimeout(() => div.remove(), 4000);
-        };
-
-        // UI Builder for Peer Review
         const peerList = document.getElementById('peer-review-list');
         employees.forEach((emp, index) => {
             const id = emp.name.replace(/\s+/g, '_');
+            const firstName = emp.name.split(' ')[0];
             const details = document.createElement('details');
             details.id = `item-${id}`;
             details.className = `sub-accordion group ${index > 0 ? 'sub-disabled' : ''}`;
@@ -620,35 +698,14 @@
                 </summary>
                 <div class="p-4 pt-0 border-t space-y-4">
                     <div class="grid grid-cols-1 gap-4 mt-4">
-                        <textarea name="strength_${id}" rows="2" data-min="60" placeholder="Kelebihan ${emp.name}..." class="comp-input input-field text-xs" required></textarea>
-                        <textarea name="weakness_${id}" rows="2" data-min="60" placeholder="Kelemahan..." class="comp-input input-field text-xs" required></textarea>
-                        <textarea name="hope_${id}" rows="2" data-min="60" placeholder="Harapan..." class="comp-input input-field text-xs" required></textarea>
-                        <button type="button" onclick="window.validatePeer('${id}')" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-bold">Simpan Penilaian Rekan</button>
+                        <div><label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Uraian Kelebihan</label><textarea name="strength_${id}" rows="2" data-min="60" placeholder="Sebutkan hal positif ${emp.prefix} ${firstName} selama bekerja ..." class="comp-input input-field text-xs bg-white" required></textarea><div class="char-hint"><span>Min 60</span><span class="char-count">0 / 60</span></div></div>
+                        <div><label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Uraian Kelemahan</label><textarea name="weakness_${id}" rows="2" data-min="60" placeholder="Sebutkan hal yang perlu diperbaiki dari ${emp.prefix} ${firstName} ..." class="comp-input input-field text-xs bg-white" required></textarea><div class="char-hint"><span>Min 60</span><span class="char-count">0 / 60</span></div></div>
+                        <div><label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Harapan</label><textarea name="hope_${id}" rows="2" data-min="60" placeholder="Apa harapan Anda untuk ${emp.prefix} ${emp.name} ..." class="comp-input input-field text-xs bg-white" required></textarea><div class="char-hint"><span>Min 60</span><span class="char-count">0 / 60</span></div></div>
+                        <button type="button" onclick="window.validatePeer('${id}')" data-tooltip="Simpan penilaian untuk rekan ini" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-bold">Selesai Penilaian</button>
                     </div>
                 </div>`;
             peerList.appendChild(details);
         });
-
-        // Other Shared Logic (Submission, Navigation, Export) Tetap Sama
-        window.validateAndNext = (n) => {
-            const sec = document.getElementById(`sec-${n}`);
-            if (!isAdmin) {
-                const visibleInputs = Array.from(sec.querySelectorAll('.comp-input, select[required]')).filter(i => !i.closest('.hidden'));
-                let valid = true;
-                visibleInputs.forEach(i => { 
-                    if (i.tagName === 'TEXTAREA' && i.value.trim().length < parseInt(i.dataset.min)) valid = false; 
-                    else if (!i.value) valid = false; 
-                });
-                if (!valid) { showMessage("Data kurang lengkap atau isian belum komprehensif."); return; }
-            }
-            sec.removeAttribute('open');
-            const badge = document.getElementById(`badge-${n}`);
-            badge.classList.replace('status-incomplete', 'status-complete');
-            const num = document.getElementById(`num-${n}`); if (num) num.classList.add('hidden');
-            const icon = badge.querySelector('path'); if (icon) icon.classList.remove('hidden');
-            const next = document.getElementById(`sec-${n + 1}`);
-            if (next) { next.classList.remove('card-disabled'); next.setAttribute('open', ''); next.scrollIntoView({ behavior: 'smooth' }); }
-        };
 
         window.validateSub = (sec, part) => {
             const sub = document.getElementById(`sub-${sec}${part}`);
@@ -659,7 +716,7 @@
                 sub.removeAttribute('open');
                 if (part === 'a') { document.getElementById(`sub-${sec}b`).classList.remove('sub-disabled'); document.getElementById(`sub-${sec}b`).setAttribute('open', ''); }
                 else { document.getElementById('btn-sec-3-final').classList.remove('hidden'); }
-            } else { showMessage("Isian belum komprehensif."); }
+            } else { window.showToast("Syarat isian komprehensif belum terpenuhi."); }
         };
 
         window.validatePeer = (id) => {
@@ -673,8 +730,33 @@
                 while (next && next.classList.contains('hidden')) next = next.nextElementSibling;
                 if (next) { next.classList.remove('sub-disabled'); next.setAttribute('open', ''); }
                 else { document.getElementById('btn-sec-5-final').classList.remove('hidden'); }
-            } else { showMessage("Input penilaian belum lengkap."); }
+            } else { window.showToast("Syarat isian penilaian belum terpenuhi."); }
         };
+
+        window.validateAndNext = (n) => {
+            const sec = document.getElementById(`sec-${n}`);
+            if (!isAdmin) {
+                const allInputs = Array.from(sec.querySelectorAll('.comp-input, select[required]'));
+                const visibleInputs = allInputs.filter(i => !i.closest('.hidden'));
+                let valid = true;
+                visibleInputs.forEach(i => { 
+                    if (i.tagName === 'TEXTAREA' && i.value.trim().length < parseInt(i.dataset.min)) valid = false; 
+                    else if (!i.value) valid = false; 
+                });
+                if (!valid) { window.showToast("Isian belum lengkap atau kurang mendalam."); return; }
+            }
+            markComplete(n);
+            sec.removeAttribute('open');
+            const next = document.getElementById(`sec-${n + 1}`);
+            if (next) { next.classList.remove('card-disabled'); next.setAttribute('open', ''); next.scrollIntoView({ behavior: 'smooth' }); }
+        };
+
+        function markComplete(n) {
+            const badge = document.getElementById(`badge-${n}`);
+            badge.classList.replace('status-incomplete', 'status-complete');
+            document.getElementById(`num-${n}`).classList.add('hidden');
+            badge.querySelector('path').classList.remove('hidden');
+        }
 
         window.filterPeerReview = () => {
             const user = document.getElementById('user_name').value;
@@ -690,13 +772,21 @@
 
         window.switchTab = (tab) => {
             ['form', 'dashboard', 'database'].forEach(t => {
-                document.getElementById(`content-${t}`).classList.add('hidden');
-                const btn = document.getElementById(`tab-${t}`); if(btn) btn.classList.replace('tab-active', 'tab-inactive');
+                const el = document.getElementById(`content-${t}`);
+                if (el) el.classList.add('hidden');
+                const tb = document.getElementById(`tab-${t}`);
+                if (tb) tb.classList.replace('tab-active', 'tab-inactive');
             });
-            document.getElementById(`content-${tab}`).classList.remove('hidden');
-            const activeBtn = document.getElementById(`tab-${tab}`); if(activeBtn) activeBtn.classList.replace('tab-inactive', 'tab-active');
-            if (tab === 'dashboard') renderDashboard();
-            if (tab === 'database') renderDatabase();
+            const geminiTab = document.getElementById('tab-gemini');
+            if (geminiTab) geminiTab.classList.replace('tab-active', 'tab-inactive');
+
+            if (tab !== 'gemini') {
+                document.getElementById(`content-${tab}`).classList.remove('hidden');
+                document.getElementById(`tab-${tab}`).classList.replace('tab-inactive', 'tab-active');
+                if (tab === 'dashboard') renderDashboard();
+                if (tab === 'database') renderDatabase();
+                setTimeout(() => window.initTooltips(), 50);
+            }
         };
 
         document.getElementById('masterForm').addEventListener('submit', async function(e) {
@@ -704,61 +794,372 @@
             const btnSubmit = document.getElementById('btn-submit-all');
             const originalText = btnSubmit.innerHTML;
             try {
-                if (isAdmin) { showMessage("Mode Admin Aktif."); return; }
-                if (!auth.currentUser) { showMessage("Cloud Belum Siap."); return; }
-                btnSubmit.disabled = true; btnSubmit.innerHTML = "Menyimpan...";
-                const current = document.getElementById('user_name').value;
-                const peers = {};
+                if (isAdmin) { window.showToast("Mode Admin aktif."); return; }
+                if (!auth.currentUser) { window.showToast("Cloud belum siap."); return; }
+                btnSubmit.disabled = true;
+                btnSubmit.innerHTML = "<span>Memproses Penyimpanan...</span>";
+                const reflectionData = {
+                    user: document.getElementById('user_name').value,
+                    vision: document.getElementById('self_vision').value,
+                    condition: { 
+                        good: document.getElementById('cond_good').value, 
+                        bad: document.getElementById('cond_bad').value,
+                        good_ind: document.getElementById('cond_good_indicator').value,
+                        bad_ind: document.getElementById('cond_bad_indicator').value,
+                        good_cause: document.getElementById('cond_good_cause').value,
+                        bad_cause: document.getElementById('cond_bad_cause').value
+                    },
+                    solusi_terbaik: document.getElementById('solusi_terbaik').value,
+                    solusi_alternatif: document.getElementById('solusi_alternatif').value,
+                    self: { 
+                        strength: document.getElementById('self_strength').value, 
+                        weakness: document.getElementById('self_weakness').value, 
+                        effort: document.getElementById('self_effort').value 
+                    },
+                    peerReviews: {}, // peerReviews logic handled by looping through employees
+                    commitment: document.getElementById('final_commitment').value,
+                    consequence: document.getElementById('final_consequence').value,
+                    timestamp: new Date().toLocaleString(),
+                    createdAt: Date.now()
+                };
                 employees.forEach(emp => {
-                    if (emp.name !== current) {
+                    if (emp.name !== reflectionData.user) {
                         const id = emp.name.replace(/\s+/g, '_');
-                        peers[emp.name] = {
+                        reflectionData.peerReviews[emp.name] = {
                             strength: document.querySelector(`[name="strength_${id}"]`).value,
                             weakness: document.querySelector(`[name="weakness_${id}"]`).value,
                             hope: document.querySelector(`[name="hope_${id}"]`).value
                         };
                     }
                 });
-                const reflectionData = {
-                    user: current, vision: document.getElementById('self_vision').value,
-                    condition: { 
-                        good: document.getElementById('cond_good').value, good_ind: document.getElementById('cond_good_indicator').value, good_cause: document.getElementById('cond_good_cause').value,
-                        bad: document.getElementById('cond_bad').value, bad_ind: document.getElementById('cond_bad_indicator').value, bad_cause: document.getElementById('cond_bad_cause').value
-                    },
-                    self: { strength: document.getElementById('self_strength').value, weakness: document.getElementById('self_weakness').value, effort: document.getElementById('self_effort').value },
-                    peerReviews: peers, commitment: document.getElementById('final_commitment').value, consequence: document.getElementById('final_consequence').value,
-                    timestamp: new Date().toLocaleString(), createdAt: Date.now()
-                };
                 await addDoc(reflectionsCollection, reflectionData);
-                showMessage("Berhasil disimpan!");
-                location.reload();
-            } catch (error) { showMessage(error.message); btnSubmit.disabled = false; btnSubmit.innerHTML = originalText; }
+                window.showToast("Berhasil Disimpan!");
+                setTimeout(() => location.reload(), 1500);
+            } catch (error) {
+                window.showToast("Gagal menyimpan!");
+                btnSubmit.disabled = false;
+                btnSubmit.innerHTML = originalText;
+            }
         });
 
-        window.renderDatabase = () => {
-            const tbody = document.getElementById('db-body'); if (!tbody) return;
-            tbody.innerHTML = database.length ? '' : '<tr><td colspan="15" class="p-10 text-center italic text-slate-400 font-medium">Belum ada data refleksi masuk.</td></tr>';
-            database.slice().reverse().forEach((row, idx) => {
+        // 2.0 INTEGRASI GEMINI AI (PROMPT OPTIMIZATION)
+        window.fetchGeminiSynthesis = async function(answers) {
+            const apiKeyInput = document.getElementById('google-api-key');
+            const apiKey = apiKeyInput ? apiKeyInput.value.trim() : ""; 
+            if (!apiKey) return "Maaf, sintesis gagal karena Gemini API Key belum diisi. Silakan isi melalui Tab Gemini.";
+            
+            const systemPrompt = `Anda berperan sebagai analis kualitatif profesional di bidang pendidikan.
+Tugas Anda adalah melakukan SINTESIS KUALITATIF atas sekumpulan jawaban responden pada satu subbagian refleksi.
+
+KETENTUAN WAJIB:
+1. Jangan mengubah, memperbaiki, atau menulis ulang jawaban responden.
+2. Jangan menyebut nama, identitas, atau ciri individu.
+3. Jangan memberi saran, rekomendasi kebijakan, atau penilaian normatif.
+4. Jangan menulis komentar umum atau kalimat klise.
+5. Gunakan bahasa yang ringkas, padat, dan langsung ke inti.
+6. Hindari kalimat bertele-tele atau pengulangan makna.
+7. Fokus pada kesimpulan kualitatif yang paling relevan dan dominan.
+
+OUTPUT:
+Tuliskan 3–5 kalimat sintesis kualitatif yang merangkum keseluruhan jawaban responden secara komprehensif dan efisien.
+
+Berikut kumpulan jawaban responden (tanpa identitas):
+{{DATA_JAWABAN_SUB_BAGIAN}}`;
+
+            const userQuery = answers.join('\n- ');
+            const payload = { contents: [{ parts: [{ text: `DATA JAWABAN:\n${userQuery}` }] }], systemInstruction: { parts: [{ text: systemPrompt }] } };
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+
+            for (let i = 0; i < 5; i++) {
+                try {
+                    const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                    if (!response.ok) throw new Error('API request failed');
+                    const result = await response.json();
+                    return result.candidates?.[0]?.content?.parts?.[0]?.text || "Gagal melakukan sintesis kualitatif.";
+                } catch (error) {
+                    if (i === 4) return "Kesalahan API.";
+                    await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000));
+                }
+            }
+        };
+
+        window.fetchGeminiSynthesis360 = async function(data) {
+            const apiKeyInput = document.getElementById('google-api-key');
+            const apiKey = apiKeyInput ? apiKeyInput.value.trim() : ""; 
+            if (!apiKey) return "Maaf, Gemini API Key belum diisi.";
+
+            const systemPrompt = `Anda berperan sebagai analis kualitatif profesional.
+Tugas Anda adalah menyusun sintesis kualitatif Refleksi 360 derajat terhadap satu orang pegawai berdasarkan uraian dari rekan-rekan kerjanya.
+
+KETENTUAN WAJIB:
+1. Jangan menyebut atau mengisyaratkan identitas penilai.
+2. Jangan mengubah isi jawaban responden.
+3. Jangan memberi saran normatif atau rekomendasi tindakan.
+4. Gunakan bahasa profesional, objektif, dan sesuai kaidah Bahasa Indonesia.
+5. Gunakan bahasa yang ringkas, padat, dan langsung ke inti.
+6. Hindari kalimat bertele-tele atau pengulangan makna.
+7. Fokus pada kesimpulan kualitatif yang paling relevan dan dominan.
+
+STRUKTUR OUTPUT WAJIB:
+- Awali dengan kalimat: “${data.prefix} ${data.name}, oleh rekan-rekan kerjanya dipandang …”
+- Lanjutkan dengan sintesis kelebihan berdasarkan kecenderungan jawaban.
+- Diikuti sintesis kelemahan berdasarkan kecenderungan jawaban.
+- Akhiri dengan sintesis harapan kolektif dari rekan-rekan kerja.
+
+Hasilkan satu paragraf utuh yang terdiri dari 5–7 kalimat efektif.`;
+
+            const userQuery = `Kelebihan:\n${data.kelebihan.join('\n- ')}\nKelemahan:\n${data.kelemahan.join('\n- ')}\nHarapan:\n${data.harapan.join('\n- ')}`;
+            const payload = { contents: [{ parts: [{ text: userQuery }] }], systemInstruction: { parts: [{ text: systemPrompt }] } };
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+
+            for (let i = 0; i < 5; i++) {
+                try {
+                    const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                    if (!response.ok) throw new Error('API request failed');
+                    const result = await response.json();
+                    return result.candidates?.[0]?.content?.parts?.[0]?.text || "Gagal.";
+                } catch (error) {
+                    if (i === 4) return "Kesalahan API.";
+                    await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000));
+                }
+            }
+        };
+
+        window.triggerAISynthesis = async function(blockId, data, label, is360 = false) {
+            const el = document.getElementById(`synthesis-${blockId}`);
+            if (!el) return;
+            el.innerHTML = `<p class="presentation-text ai-loading text-blue-600 no-italic">Sedang melakukan analisis kualitatif profesional menggunakan Gemini AI...</p>`;
+            const synthesisResult = is360 ? await window.fetchGeminiSynthesis360(data) : await window.fetchGeminiSynthesis(data);
+            el.innerHTML = `<div onclick="window.openSynthesisModal('${label}', this.innerText)" class="presentation-text text-slate-800 leading-relaxed no-italic">${synthesisResult}</div>`;
+            window.initTooltips();
+        };
+
+        window.aiDataStore = {};
+
+        window.renderDashboard = function() {
+            document.getElementById('stat-count').textContent = database.length;
+            const statsCard = document.getElementById('responden-stats-card');
+            if(statsCard) {
+                const listResponden = database.map(d => d.user).sort().join('\n');
+                statsCard.setAttribute('data-tooltip', "Daftar Responden:\n" + (listResponden || "Belum ada data"));
+            }
+            const container = document.getElementById('collective-analysis-container');
+            if (!container) return;
+            container.innerHTML = "";
+            if (database.length === 0) return;
+            const blocks = [
+                { id: 'b1', title: "Cita-cita & Harapan Saya terhadap Sekolah", label: "Cita-cita & Harapan", data: database.map(d => ({ text: d.vision, user: d.user })) },
+                { id: 'b2', title: "Aspek Positif (Kondisi Baik)", label: "Aspek Kondisi Baik", data: database.map(d => ({ text: d.condition.good, user: d.user })) },
+                { id: 'b3', title: "Indikator Kondisi Baik", label: "Indikator Kondisi Baik", data: database.map(d => ({ text: d.condition.good_ind, user: d.user })) },
+                { id: 'b3c', title: "Penyebab Kondisi Baik", label: "Penyebab Kondisi Baik", data: database.map(d => ({ text: d.condition.good_cause || "N/A", user: d.user })) },
+                { id: 'b4', title: "Aspek Memprihatinkan (Tidak Baik)", label: "Aspek Kondisi Buruk", data: database.map(d => ({ text: d.condition.bad, user: d.user })) },
+                { id: 'b5', title: "Indikator Kondisi Memprihatinkan", label: "Indikator Kondisi Buruk", data: database.map(d => ({ text: d.condition.bad_ind, user: d.user })) },
+                { id: 'b5c', title: "Penyebab Kondisi Memprihatinkan", label: "Penyebab Kondisi Buruk", data: database.map(d => ({ text: d.condition.bad_cause || "N/A", user: d.user })) },
+                { id: 'b6', title: "Solusi terbaik yang harus dilakukan", label: "Solusi Terbaik", data: database.map(d => ({ text: d.solusi_terbaik || "N/A", user: d.user })) },
+                { id: 'b7', title: "Alternatif lainnya sebagai solusi", label: "Solusi Alternatif", data: database.map(d => ({ text: d.solusi_alternatif || "N/A", user: d.user })) },
+                { id: 'b8', title: "Apa kekuatan dan kontribusi terbaik saya bagi sekolah selama ini? Apa yang sudah saya berikan secara maksimal?", label: "Kekuatan Personal", data: database.map(d => ({ text: d.self.strength, user: d.user })) },
+                { id: 'b9', title: "Secara jujur, kekurangan, kendala, atau kesalahan yang saya alami dalam bekerja adalah ...", label: "Kekurangan Personal", data: database.map(d => ({ text: d.self.weakness, user: d.user })) },
+                { id: 'b10', title: "Upaya apa yang akan saya lakukan untuk mengatasi hambatan tersebut?", label: "Upaya Personal", data: database.map(d => ({ text: d.self.effort, user: d.user })) },
+                { id: 'b11', title: "Komitmen Saya", label: "Komitmen Kerja", data: database.map(d => ({ text: d.commitment, user: d.user })) },
+                { id: 'b12', title: "Pernyataan Konsekuensi Saya", label: "Konsekuensi", data: database.map(d => ({ text: d.consequence, user: d.user })) }
+            ];
+            for (const block of blocks) {
+                window.aiDataStore[block.id] = block.data.map(i => i.text);
+                const details = document.createElement('details');
+                details.className = "card shadow-sm mb-4 border-l-4 border-blue-600 group dashboard-accordion";
+                details.innerHTML = `
+                    <summary class="flex items-center justify-between p-6 cursor-pointer hover:bg-slate-50 transition-colors list-none">
+                        <div class="flex items-center space-x-4"><span class="presentation-header text-blue-900 no-italic">${block.title}</span></div>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-400 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                    </summary>
+                    <div class="p-8 pt-2 border-t border-slate-50">
+                        <p class="text-[11px] font-bold text-blue-500 uppercase tracking-widest mb-6 no-italic">Data Responden: ${database.length} Orang</p>
+                        <div class="space-y-6 mb-10">${block.data.map(item => `<div class="p-5 bg-white border border-slate-200 rounded-xl shadow-sm presentation-text text-slate-800 no-italic transition-all hover:border-blue-200"><div class="font-black text-blue-900 mb-1 uppercase text-[10px] tracking-widest">${item.user}:</div>${item.text}</div>`).join('')}</div>
+                        <div class="p-6 bg-blue-50 rounded-2xl border-2 border-blue-100 ai-synthesis-box">
+                            <h4 class="text-xs font-black text-blue-800 uppercase mb-4 no-italic tracking-tighter flex justify-between items-center"><span>Sintesis Kualitatif (Gemini AI Analytics)</span></h4>
+                            <div id="synthesis-${block.id}"><button onclick="window.triggerAISynthesis('${block.id}', window.aiDataStore['${block.id}'], '${block.label}')" class="px-6 py-3 bg-blue-600 text-white rounded-xl font-bold text-sm shadow-lg hover:bg-blue-700 transition-all">Mulai Sintesis Kualitatif (AI)</button></div>
+                        </div>
+                    </div>`;
+                container.appendChild(details);
+            }
+            const sectionHeader = document.createElement('div');
+            sectionHeader.className = "mt-16 mb-8 pt-8 border-t";
+            sectionHeader.innerHTML = `<h2 class="presentation-header text-slate-900 uppercase tracking-tighter no-italic">Laporan Analisis Refleksi 360° (Per Orang)</h2>`;
+            container.appendChild(sectionHeader);
+            for (const emp of employees) {
+                const reviews = database.map(d => d.peerReviews[emp.name]).filter(r => r && r.strength);
+                if (reviews.length > 0) {
+                    const blockIdStr = emp.name.replace(/\s+/g, '_');
+                    const synthesisId = `360-${blockIdStr}`;
+                    const sList = reviews.map(r => r.strength);
+                    const wList = reviews.map(r => r.weakness);
+                    const hList = reviews.map(r => r.hope);
+                    window.aiDataStore[synthesisId] = { kelebihan: sList, kelemahan: wList, harapan: hList, name: emp.name, prefix: emp.prefix };
+                    const personDetails = document.createElement('details');
+                    personDetails.className = "card shadow-md mb-6 border-l-4 border-emerald-500 group dashboard-accordion";
+                    personDetails.innerHTML = `
+                        <summary class="flex items-center justify-between p-6 cursor-pointer hover:bg-slate-50 transition-colors list-none">
+                            <div class="flex items-center space-x-4"><div class="w-10 h-10 rounded-full bg-emerald-600 flex items-center justify-center text-white font-black text-sm no-italic">${emp.name.split(' ').map(n=>n[0]).join('')}</div><span class="presentation-header text-emerald-900 no-italic">${emp.name}</span></div>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-emerald-400 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                        </summary>
+                        <div class="p-8 pt-4 border-t border-slate-50 space-y-12">
+                            <div><h4 class="text-sm font-black text-emerald-700 uppercase mb-4 tracking-widest no-italic">Kelebihan</h4><div class="space-y-3">${sList.map(t => `<div class="p-4 bg-white border border-emerald-100 rounded-xl presentation-text text-slate-800 no-italic transition-all hover:bg-slate-50">"${t}"</div>`).join('')}</div></div>
+                            <div><h4 class="text-sm font-black text-amber-700 uppercase mb-4 tracking-widest no-italic">Kelemahan</h4><div class="space-y-3">${wList.map(t => `<div class="p-4 bg-white border border-amber-100 rounded-xl presentation-text text-slate-800 no-italic transition-all hover:bg-slate-50">"${t}"</div>`).join('')}</div></div>
+                            <div><h4 class="text-sm font-black text-blue-700 uppercase mb-4 tracking-widest no-italic">Harapan</h4><div class="space-y-3">${reviews.map(r => r.hope).map(t => `<div class="p-4 bg-white border border-blue-100 rounded-xl presentation-text text-slate-800 no-italic transition-all hover:bg-slate-50">"${t}"</div>`).join('')}</div></div>
+                            <div class="p-6 bg-emerald-50 border-2 border-emerald-500 rounded-2xl shadow-sm mb-4 ai-synthesis-box">
+                                <h4 class="text-xs font-black text-slate-900 uppercase mb-4 no-italic tracking-tighter flex justify-between items-center"><span>Sintesis Kualitatif Profil (Gemini AI)</span></h4>
+                                <div id="synthesis-${synthesisId}"><button onclick="window.triggerAISynthesis('${synthesisId}', window.aiDataStore['${synthesisId}'], 'Profil Kinerja ${emp.name}', true)" class="px-6 py-3 bg-emerald-600 text-white rounded-xl font-bold text-sm shadow-lg hover:bg-emerald-700 transition-all">Mulai Sintesis Kualitatif (AI)</button></div>
+                            </div>
+                        </div>`;
+                    container.appendChild(personDetails);
+                }
+            }
+            window.initTooltips();
+        };
+
+        window.sortTable = (key) => {
+            if (currentSort.key === key) { currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc'; } else { currentSort.key = key; currentSort.direction = 'asc'; }
+            renderDatabase();
+        };
+
+        window.toggleSelectAll = (e) => {
+            const checkboxes = document.querySelectorAll('.row-select');
+            selectedIds.clear();
+            checkboxes.forEach(cb => { cb.checked = e.target.checked; if (cb.checked) selectedIds.add(cb.dataset.id); });
+            updateBulkBtnVisibility();
+        };
+
+        window.toggleRowSelect = (id) => {
+            if (selectedIds.has(id)) selectedIds.delete(id); else selectedIds.add(id);
+            updateBulkBtnVisibility();
+        };
+
+        function updateBulkBtnVisibility() {
+            const btn = document.getElementById('btn-bulk-delete');
+            if (selectedIds.size > 0) btn.classList.remove('hidden'); else btn.classList.add('hidden');
+        }
+
+        window.deleteSingle = async (id) => {
+            if (confirm("Hapus baris data ini?")) {
+                try { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reflections', id)); window.showToast("Data dihapus"); } catch (error) { window.showToast("Gagal menghapus"); }
+            }
+        };
+
+        window.deleteSelected = async () => {
+            if (confirm(`Hapus ${selectedIds.size} data terpilih?`)) {
+                try { const promises = Array.from(selectedIds).map(id => deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reflections', id))); await Promise.all(promises); selectedIds.clear(); updateBulkBtnVisibility(); window.showToast("Data terpilih dihapus"); } catch (error) { window.showToast("Gagal"); }
+            }
+        };
+
+        window.renderDatabase = function() {
+            const header = document.getElementById('db-header');
+            const tbody = document.getElementById('db-body');
+            if (!header || !tbody) return;
+            const columns = [
+                { key: 'select', label: '<input type="checkbox" onclick="window.toggleSelectAll(event)">', sortable: false, help: "Pilih baris untuk aksi massal" },
+                { key: 'no', label: 'No', sortable: false, help: "Nomor urut data" },
+                { key: 'timestamp', label: 'Timestamp', help: "Waktu pengisian formulir" },
+                { key: 'user', label: 'Nama', help: "Nama responden pengisi" },
+                { key: 'vision', label: 'Cita-cita', help: "Cita-cita responden terhadap sekolah" },
+                { key: 'good', label: 'Aspek Baik', help: "Kondisi baik yang dirasakan" },
+                { key: 'good_ind', label: 'Indikator Baik', help: "Tanda kondisi baik" },
+                { key: 'good_cause', label: 'Penyebab Baik', help: "Faktor pendukung kondisi baik" },
+                { key: 'bad', label: 'Aspek Buruk', help: "Kondisi memprihatinkan" },
+                { key: 'bad_ind', label: 'Indikator Buruk', help: "Tanda kondisi buruk" },
+                { key: 'bad_cause', label: 'Penyebab Buruk', help: "Faktor penyebab kondisi buruk" },
+                { key: 'solusi_terbaik', label: 'Solusi Terbaik', help: "Langkah penyelesaian masalah" },
+                { key: 'solusi_alternatif', label: 'Solusi Alternatif', help: "Opsi solusi lainnya" },
+                { key: 'strength', label: 'Kekuatan', help: "Kelebihan personal pengisi" },
+                { key: 'weakness', label: 'Kekurangan', help: "Kelemahan personal pengisi" },
+                { key: 'effort', label: 'Upaya', help: "Langkah perbaikan personal" },
+                { key: 'commitment', label: 'Komitmen', help: "Janji kerja responden" },
+                { key: 'consequence', label: 'Konsekuensi', help: "Sanksi jika melanggar komitmen" },
+                { key: 'action', label: 'Aksi', sortable: false, help: "Tindakan hapus data" }
+            ];
+            header.innerHTML = columns.map(c => {
+                const isSortActive = currentSort.key === c.key;
+                const icon = c.sortable !== false ? `<span class="sort-icon ${isSortActive ? 'sort-active' : ''}">${isSortActive ? (currentSort.direction === 'asc' ? '▲' : '▼') : '⇅'}</span>` : '';
+                return `<th class="p-3 whitespace-nowrap" data-tooltip="${c.help}" ${c.sortable !== false ? `onclick="window.sortTable('${c.key}')"` : ''}>${c.label}${icon}</th>`;
+            }).join('');
+            let sortedData = [...database];
+            if (currentSort.key !== 'no') {
+                sortedData.sort((a, b) => {
+                    let valA = a[currentSort.key] || ""; let valB = b[currentSort.key] || "";
+                    if (currentSort.key === 'good') { valA = a.condition.good; valB = b.condition.good; }
+                    if (currentSort.key === 'good_ind') { valA = a.condition.good_ind; valB = b.condition.good_ind; }
+                    if (currentSort.key === 'good_cause') { valA = a.condition.good_cause; valB = b.condition.good_cause; }
+                    if (currentSort.key === 'bad') { valA = a.condition.bad; valB = b.condition.bad; }
+                    if (currentSort.key === 'bad_ind') { valA = a.condition.bad_ind; valB = b.condition.bad_ind; }
+                    if (currentSort.key === 'bad_cause') { valA = a.condition.bad_cause; valB = b.condition.bad_cause; }
+                    if (currentSort.key === 'strength') { valA = a.self.strength; valB = b.self.strength; }
+                    if (currentSort.key === 'weakness') { valA = a.self.weakness; valB = b.self.weakness; }
+                    if (currentSort.key === 'effort') { valA = a.self.effort; valB = b.self.effort; }
+                    if (typeof valA === 'string') valA = valA.toLowerCase(); if (typeof valB === 'string') valB = valB.toLowerCase();
+                    if (valA < valB) return currentSort.direction === 'asc' ? -1 : 1;
+                    if (valA > valB) return currentSort.direction === 'asc' ? 1 : -1;
+                    return 0;
+                });
+            }
+            tbody.innerHTML = sortedData.length ? '' : '<tr><td colspan="19" class="p-10 text-center italic text-slate-400">Belum ada data.</td></tr>';
+            sortedData.forEach((row, idx) => {
                 const tr = document.createElement('tr');
-                tr.innerHTML = `<td class="p-3 border-b">${database.length - idx}</td><td class="p-3 border-b">${row.timestamp}</td><td class="p-3 border-b font-bold">${row.user}</td><td class="p-3 border-b max-w-[150px] truncate">${row.vision}</td><td class="p-3 border-b max-w-[150px] truncate">${row.condition.good}</td><td class="p-3 border-b max-w-[150px] truncate">${row.condition.good_ind}</td><td class="p-3 border-b max-w-[150px] truncate">${row.condition.good_cause}</td><td class="p-3 border-b max-w-[150px] truncate">${row.condition.bad}</td><td class="p-3 border-b max-w-[150px] truncate">${row.condition.bad_ind}</td><td class="p-3 border-b max-w-[150px] truncate">${row.condition.bad_cause}</td><td class="p-3 border-b max-w-[150px] truncate">${row.self.strength}</td><td class="p-3 border-b max-w-[150px] truncate">${row.self.weakness}</td><td class="p-3 border-b max-w-[150px] truncate">${row.self.effort}</td><td class="p-3 border-b max-w-[150px] truncate">${row.commitment}</td><td class="p-3 border-b max-w-[150px] truncate">${row.consequence}</td>`;
+                const vals = [ `<input type="checkbox" class="row-select" data-id="${row.id}" ${selectedIds.has(row.id) ? 'checked' : ''} onclick="window.toggleRowSelect('${row.id}')">`, idx + 1, row.timestamp, row.user, row.vision, row.condition.good, row.condition.good_ind, row.condition.good_cause || "-", row.condition.bad, row.condition.bad_ind, row.condition.bad_cause || "-", row.solusi_terbaik || "-", row.solusi_alternatif || "-", row.self.strength, row.self.weakness, row.self.effort, row.commitment, row.consequence, `<button onclick="window.deleteSingle('${row.id}')" data-tooltip="Klik untuk menghapus rekaman ini" class="text-red-600 hover:text-red-800 font-bold">Hapus</button>` ];
+                tr.innerHTML = vals.map(v => `<td class="p-3 text-slate-500 max-w-[200px] truncate" title="${v}">${v}</td>`).join('');
                 tbody.appendChild(tr);
             });
+            window.initTooltips();
+        };
+
+        const getFormattedDate = () => {
+            const d = new Date();
+            const pad = (n) => n.toString().padStart(2, '0');
+            return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())} ${pad(d.getHours())}.${pad(d.getSeconds())}`;
         };
 
         window.exportToExcel = () => {
-            const ws = XLSX.utils.json_to_sheet(database.map((d, i) => ({ No: i + 1, Waktu: d.timestamp, Nama: d.user, Visi: d.vision, Baik: d.condition.good, Buruk: d.condition.bad, Komitmen: d.commitment })));
-            const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Data"); XLSX.writeFile(wb, "Rekap_Refleksi.xlsx");
+            const dataToExport = database.map((d, i) => {
+                const row = { "No": i + 1, "Timestamp": d.timestamp, "Nama": d.user, "Cita-cita & Harapan": d.vision, "Aspek Baik": d.condition.good, "Indikator Baik": d.condition.good_ind, "Penyebab Baik": d.condition.good_cause, "Aspek Buruk": d.condition.bad, "Indikator Buruk": d.condition.bad_ind, "Penyebab Buruk": d.condition.bad_cause, "Solusi Terbaik": d.solusi_terbaik, "Solusi Alternatif": d.solusi_alternatif, "Kekuatan Diri": d.self.strength, "Kelemahan Diri": d.self.weakness, "Upaya Perbaikan": d.self.effort, "Komitmen": d.commitment, "Konsekuensi": d.consequence };
+                employees.forEach(emp => { const review = d.peerReviews[emp.name]; if (review) { row[`Review 360: ${emp.name} (Kelebihan)`] = review.strength; row[`Review 360: ${emp.name} (Kelemahan)`] = review.weakness; row[`Review 360: ${emp.name} (Harapan)`] = review.hope; } });
+                return row;
+            });
+            const ws = XLSX.utils.json_to_sheet(dataToExport);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Database");
+            XLSX.writeFile(wb, `Ekspor Refleksi 360 SDN Perdana ${getFormattedDate()}.xlsx`);
         };
 
         window.exportToPDF = async () => {
-            const { jsPDF } = window.jspdf; const docPdf = new jsPDF('l', 'pt', 'a4');
-            docPdf.setFontSize(14); docPdf.text("Rekapitulasi Refleksi SDN Perdana", 40, 40);
-            docPdf.autoTable({ head: [["No", "Waktu", "Nama", "Mimpi"]], body: database.map((d, i) => [i + 1, d.timestamp, d.user, d.vision.substring(0, 50)+'...']), startY: 60 });
-            docPdf.save("Rekap_Refleksi.pdf");
+            const { jsPDF } = window.jspdf;
+            const docPdf = new jsPDF('l', 'pt', 'a4');
+            const headers = [["No", "Timestamp", "Nama", "Cita-cita", "Baik", "Ind.Baik", "Sebab.Baik", "Buruk", "Ind.Buruk", "Sebab.Buruk", "Solusi", "Alt.Solusi", "Kuat", "Lemah", "Upaya", "Komitmen", "Konsekuensi"]];
+            const dataToExport = database.map((d, i) => [ i + 1, d.timestamp, d.user, d.vision, d.condition.good, d.condition.good_ind, d.condition.good_cause, d.condition.bad, d.condition.bad_ind, d.condition.bad_cause, d.solusi_terbaik, d.solusi_alternatif, d.self.strength, d.self.weakness, d.self.effort, d.commitment, d.consequence ]);
+            docPdf.autoTable({ head: headers, body: dataToExport, styles: { fontSize: 5, cellPadding: 2, overflow: 'linebreak' }, theme: 'grid' });
+            docPdf.save(`Ekspor Refleksi 360 SDN Perdana ${getFormattedDate()}.pdf`);
         };
 
-        window.backupJSON = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(database, null, 2)], { type: 'application/json' })); a.download = `backup_${Date.now()}.json`; a.click(); };
-        window.clearAll = async () => { if (confirm("Hapus seluruh database cloud?")) { await Promise.all(database.map(row => deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reflections', row.id)))); location.reload(); } };
+        window.backupJSON = () => {
+            const data = JSON.stringify(database, null, 2);
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = `Backup Refleksi 360 SDN Perdana ${getFormattedDate()}.json`; a.click();
+        };
+
+        window.restoreJSON = (e) => {
+            const file = e.target.files[0]; if (!file) return;
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                try { const data = JSON.parse(event.target.result); if (confirm("Restore data?")) { for (const item of data) { delete item.id; await addDoc(reflectionsCollection, item); } window.showToast("Restore Berhasil"); } } catch (err) { window.showToast("Format file salah"); }
+            };
+            reader.readAsText(file);
+        };
+
+        window.clearAll = async () => {
+            if (confirm("Hapus seluruh database?")) {
+                const promises = database.map(row => deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reflections', row.id)));
+                await Promise.all(promises);
+                window.showToast("Database dibersihkan");
+            }
+        };
     </script>
 </body>
 </html>
