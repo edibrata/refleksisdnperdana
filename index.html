@@ -632,6 +632,29 @@
             }
         });
 
+        // LOGIKA INDIKATOR KARAKTER DINAMIS
+        document.addEventListener('input', (e) => {
+            if (e.target.classList.contains('comp-input')) {
+                const ta = e.target;
+                const min = parseInt(ta.dataset.min) || 0;
+                const current = ta.value.length;
+                const countDisplay = ta.parentElement.querySelector('.char-count');
+                
+                if (countDisplay) {
+                    countDisplay.textContent = `${current} / ${min}`;
+                    if (current >= min) {
+                        countDisplay.classList.remove('char-error');
+                        countDisplay.classList.add('char-success');
+                    } else if (current > 0) {
+                        countDisplay.classList.add('char-error');
+                        countDisplay.classList.remove('char-success');
+                    } else {
+                        countDisplay.classList.remove('char-error', 'char-success');
+                    }
+                }
+            }
+        });
+
         window.onload = async () => {
             await initAuth();
             if (isAdmin) applyAdminState();
