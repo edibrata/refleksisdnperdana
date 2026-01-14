@@ -12,7 +12,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; }
         
         details summary::-webkit-details-marker { display:none; }
@@ -68,6 +68,29 @@
         .toast-item.show { opacity: 1; transform: translateY(0); }
 
         .custom-tooltip { position: fixed; background: #0f172a; color: white; padding: 0.5rem 0.75rem; border-radius: 0.5rem; font-size: 0.65rem; font-weight: 600; pointer-events: none; z-index: 10000; opacity: 0; transition: opacity 0.1s ease; white-space: pre-line; max-width: 280px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); line-height: 1.4; border: 1px solid rgba(255,255,255,0.1); }
+
+        /* TAB HOME SPECIFIC STYLES (COMPACT & SPLIT) */
+        #content-home .wave-bg { position: absolute; bottom: 0; left: 0; width: 100%; overflow: hidden; line-height: 0; transform: rotate(180deg); }
+        #content-home .wave-bg svg { position: relative; display: block; width: calc(100% + 1.3px); height: 150px; }
+        #content-home .wave-bg .shape-fill { fill: #f8fafc; }
+
+        #content-home .main-landing-card { transition: all 0.6s cubic-bezier(0.165, 0.84, 0.44, 1); }
+        #content-home .main-landing-card:hover { box-shadow: 0 40px 70px -15px rgba(0, 0, 0, 0.08); border-color: #dbeafe; }
+        
+        #content-home h1 { transition: all 0.5s ease; letter-spacing: -0.05em; line-height: 1.1; }
+        #content-home h1:hover { transform: translateX(4px); color: #1e293b; }
+        
+        #content-home p { transition: all 0.5s ease; }
+        #content-home p:hover { opacity: 0.85; }
+
+        #content-home .feature-card { transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        #content-home .feature-card:hover { transform: translateY(-4px); background-color: #ffffff; box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.05); border-color: #e2e8f0; }
+
+        #content-home .btn-start { transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        #content-home .btn-start:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 20px 30px -10px rgba(15, 23, 42, 0.3); background-color: #000000; }
+        
+        #content-home .visual-area { transition: all 0.8s cubic-bezier(0.165, 0.84, 0.44, 1); }
+        #content-home .visual-area:hover { transform: scale(1.03); filter: drop-shadow(0 20px 40px rgba(59, 130, 246, 0.15)); }
     </style>
 </head>
 <body class="text-slate-800">
@@ -88,13 +111,15 @@
                     <span class="font-bold text-lg tracking-tight">Refleksi Kinerja SDN Perdana</span>
                 </div>
                 <div class="flex items-center space-x-6 text-sm">
-                    <!-- TAB BARU: HOME (DEFAULT) -->
+                    <!-- Navigasi Tab -->
                     <button onclick="switchTab('home')" id="tab-home" data-tooltip="Halaman Beranda Utama" class="tab-active py-5 transition-all">Home</button>
-                    <button onclick="switchTab('form')" id="tab-form" data-tooltip="Isi formulir refleksi kinerja Anda" class="tab-inactive py-5 transition-all">Formulir</button>
-                    <button onclick="switchTab('dashboard')" id="tab-dashboard" data-tooltip="Lihat analisis kualitatif seluruh responden" class="tab-inactive py-5 transition-all">Analisis Kolektif</button>
+                    <button onclick="switchTab('form')" id="tab-form" data-tooltip="Isi formulir refleksi kinerja Anda" class="tab-inactive py-5 transition-all hidden">Formulir</button>
+                    <button onclick="switchTab('dashboard')" id="tab-dashboard" data-tooltip="Lihat analisis kualitatif seluruh responden" class="tab-inactive py-5 transition-all hidden">Analisis Kolektif</button>
                     <button onclick="switchTab('database')" id="tab-database" data-tooltip="Kelola data rekaman refleksi (Admin)" class="tab-inactive py-5 transition-all hidden">Database</button>
-                    <button onclick="window.openGeminiModal()" id="tab-gemini" data-tooltip="Konfigurasi API Key Gemini AI" class="tab-inactive py-5 transition-all">Gemini</button>
-                    <button onclick="openLoginModal()" id="btn-login-admin" data-tooltip="Masuk sebagai administrator sistem" class="ml-4 px-3 py-1 bg-slate-100 text-slate-500 rounded-md hover:bg-slate-200 transition-colors text-xs font-bold uppercase tracking-wide">Login Admin</button>
+                    <button onclick="window.openGeminiModal()" id="tab-gemini" data-tooltip="Konfigurasi API Key Gemini AI" class="tab-inactive py-5 transition-all hidden">Gemini</button>
+                    
+                    <!-- Admin Control -->
+                    <button onclick="openLoginModal()" id="btn-login-admin" data-tooltip="Masuk sebagai administrator sistem" class="ml-4 px-3 py-1 bg-slate-100 text-slate-500 rounded-md hover:bg-slate-200 transition-colors text-xs font-bold uppercase tracking-wide">Admin</button>
                     <button onclick="logoutAdmin()" id="btn-logout-admin" data-tooltip="Keluar dari sesi administrator" class="ml-4 px-3 py-1 bg-red-50 text-red-600 rounded-md hover:bg-red-100 transition-colors text-xs font-bold uppercase hidden tracking-wide">Logout</button>
                 </div>
             </div>
@@ -190,69 +215,92 @@
 
     <main class="max-w-5xl mx-auto px-4 py-8">
 
-        <!-- SECTION: HOME (LANDING PAGE) -->
-        <section id="content-home" class="space-y-8 animate-in fade-in duration-700">
-            <div class="card p-10 md:p-16 border-l-8 border-blue-600 bg-white shadow-xl relative overflow-hidden">
-                <div class="absolute top-0 right-0 p-8 opacity-5">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-48 w-48" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+        <!-- SECTION: HOME (REDESIGN WITH ISOLATED STYLES) -->
+        <section id="content-home" class="animate-in fade-in duration-700">
+            <!-- Full width wrapper inside max-w-5xl container -->
+            <div class="card main-landing-card bg-gradient-to-br from-white via-blue-50/30 to-indigo-50/50 shadow-2xl relative overflow-hidden min-h-[500px] flex items-center">
+                
+                <div class="wave-bg">
+                    <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
+                        <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" class="shape-fill"></path>
                     </svg>
                 </div>
-                
-                <div class="relative z-10 max-w-3xl">
-                    <h1 class="text-4xl md:text-5xl font-black text-slate-900 leading-tight mb-6 uppercase tracking-tighter">
-                        Selamat Datang di Portal <br>
-                        <span class="text-blue-600">Refleksi Kinerja</span> SDN Perdana
-                    </h1>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 p-8 md:p-12 relative z-10 w-full items-center">
                     
-                    <div class="space-y-6 presentation-text text-slate-600 no-italic leading-relaxed">
-                        <p>
-                            Sistem Refleksi Komprehensif ini dirancang sebagai instrumen evaluasi diri dan kolaboratif guna memperkuat budaya kerja profesional di lingkungan satuan pendidikan kita. Melalui portal ini, setiap pendidik dan tenaga kependidikan berkesempatan untuk meninjau kembali dedikasi, kontribusi, serta area pengembangan demi kemajuan bersama.
-                        </p>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
-                            <div class="flex items-start space-x-4">
-                                <div class="bg-blue-100 p-2 rounded-lg text-blue-600 shrink-0">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    <div class="lg:col-span-7 space-y-6 text-left">
+                        <div>
+                            <div class="inline-flex items-center space-x-2 bg-blue-600 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-4">
+                                <span class="relative flex h-2 w-2 mr-1">
+                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                                    <span class="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+                                </span>
+                                Monitoring Kinerja Satuan Pendidikan
+                            </div>
+                            <h1 class="text-4xl md:text-5xl font-extrabold text-slate-900 leading-none uppercase mb-4 cursor-default">
+                                Refleksi 360° <br><span class="text-blue-700">SDN Perdana</span>
+                            </h1>
+                            <p class="text-base text-slate-600 font-medium leading-relaxed max-w-lg cursor-default">
+                                Suara Anda penting untuk perbaikan bersama. 
+                                Refleksi ini bertujuan menghimpun pandangan jujur dan objektif sebagai dasar penguatan budaya kerja, kinerja, dan kualitas layanan pendidikan di SDN Perdana.
+                            </p>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div class="flex items-start space-x-4 max-w-lg group feature-card p-3 rounded-2xl border border-transparent">
+                                <div class="bg-white p-2.5 rounded-xl shadow-sm border border-slate-100 text-blue-600 group-hover:scale-110 transition-transform duration-300">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                                     </svg>
                                 </div>
                                 <div>
-                                    <h4 class="font-bold text-slate-800 text-sm uppercase mb-1">Evaluasi Objektif</h4>
-                                    <p class="text-xs">Menyediakan data kualitatif yang jujur untuk pemetaan kekuatan tim.</p>
+                                    <h4 class="font-extrabold text-slate-800 text-xs uppercase tracking-tight mb-1">Kerahasiaan terjaga.</h4>
+                                    <p class="text-[11px] text-slate-500 leading-relaxed">Identitas penilai tidak ditampilkan. Setiap masukan diolah secara kolektif dan profesional.</p>
                                 </div>
                             </div>
-                            <div class="flex items-start space-x-4">
-                                <div class="bg-amber-100 p-2 rounded-lg text-amber-600 shrink-0">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                            
+                            <div class="flex items-start space-x-4 max-w-lg group feature-card p-3 rounded-2xl border border-transparent">
+                                <div class="bg-white p-2.5 rounded-xl shadow-sm border border-slate-100 text-emerald-600 group-hover:scale-110 transition-transform duration-300">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
                                 </div>
                                 <div>
-                                    <h4 class="font-bold text-slate-800 text-sm uppercase mb-1">Kerahasiaan Terjamin</h4>
-                                    <p class="text-xs">Identitas penilai pada bagian 360° sepenuhnya anonim dan terlindungi.</p>
+                                    <h4 class="font-extrabold text-slate-800 text-xs uppercase tracking-tight mb-1">Fokus pada perbaikan nyata.</h4>
+                                    <p class="text-[11px] text-slate-500 leading-relaxed">Hasil refleksi digunakan sebagai dasar evaluasi, penguatan kelebihan, dan perumusan langkah perbaikan ke depan.</p>
                                 </div>
                             </div>
                         </div>
 
-                        <p>
-                            Partisipasi Anda sangat krusial. Setiap poin refleksi dan komitmen yang Anda sampaikan akan menjadi landasan kebijakan strategis sekolah di masa yang akan datang.
-                        </p>
+                        <div class="pt-2">
+                            <button onclick="switchTab('form')" class="btn-start group relative flex items-center space-x-4 bg-slate-900 text-white px-8 py-4 rounded-2xl font-black text-lg shadow-2xl active:scale-[0.98]">
+                                <span>Mulai Pengisian Refleksi</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 transform group-hover:translate-x-2 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                                </svg>
+                            </button>
+                        </div>
                     </div>
-                    
-                    <div class="mt-12">
-                        <button onclick="switchTab('form')" class="group flex items-center space-x-4 bg-blue-600 text-white px-10 py-5 rounded-2xl font-black text-lg shadow-2xl shadow-blue-200 hover:bg-blue-700 transition-all active:scale-[0.98]">
-                            <span>Mulai Pengisian Refleksi</span>
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 transform group-hover:translate-x-2 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                            </svg>
-                        </button>
+
+                    <div class="lg:col-span-5 hidden lg:flex justify-center items-center relative visual-area">
+                        <div class="absolute w-64 h-64 bg-blue-100 rounded-full blur-3xl opacity-60 -z-10 animate-pulse"></div>
+                        <svg viewBox="0 0 500 500" class="w-full h-auto drop-shadow-2xl">
+                            <rect x="100" y="100" width="300" height="300" rx="40" fill="#ffffff" />
+                            <rect x="120" y="140" width="220" height="20" rx="10" fill="#eff6ff" />
+                            <rect x="120" y="180" width="260" height="20" rx="10" fill="#eff6ff" />
+                            <rect x="120" y="220" width="180" height="20" rx="10" fill="#eff6ff" />
+                            <circle cx="150" cy="350" r="40" fill="#2563eb" />
+                            <circle cx="350" cy="350" r="40" fill="#1d4ed8" />
+                            <path d="M200 280 Q250 240 300 280" stroke="#3b82f6" stroke-width="4" stroke-dasharray="8,8" fill="none" />
+                            <circle cx="420" cy="120" r="20" fill="#fbbf24" opacity="0.8" />
+                            <rect x="60" y="420" width="30" height="30" rx="8" fill="#10b981" transform="rotate(15 75 435)" />
+                        </svg>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- SECTION: FORMULIR -->
+        <!-- SECTION: FORMULIR (RESTORED WIDTH) -->
         <section id="content-form" class="hidden">
             <form id="masterForm" class="space-y-6 pb-20">
                 
@@ -263,7 +311,7 @@
                             <div id="badge-1" class="status-badge status-incomplete">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" id="icon-1"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" class="hidden" /><text x="7" y="17" font-size="14" font-weight="bold" fill="currentColor" id="num-1">1</text></svg>
                             </div>
-                            <h2 class="font-bold text-slate-700">Identitas Pegawai</h2>
+                            <h2 class="font-bold text-slate-700 uppercase tracking-tight">Identitas Pegawai</h2>
                         </div>
                     </summary>
                     <div class="p-6 pt-0 border-t border-slate-50">
@@ -291,14 +339,14 @@
                     </div>
                 </details>
 
-                <!-- BLOK 2: CITA-CITA & HARAPAN -->
+                <!-- BLOK 2-6 Dibiarkan Identik Sesuai Kode Sebelumnya Sesuai Ketentuan Mutlak -->
                 <details id="sec-2" class="card shadow-sm card-disabled">
                     <summary class="flex items-center justify-between p-6 cursor-pointer hover:bg-slate-50 transition-colors list-none">
                         <div class="flex items-center space-x-4">
                             <div id="badge-2" class="status-badge status-incomplete">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" id="icon-2"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" class="hidden" /><text x="7" y="17" font-size="14" font-weight="bold" fill="currentColor" id="num-2">2</text></svg>
                             </div>
-                            <h2 class="font-bold text-slate-700">Cita-cita & Harapan Saya terhadap Sekolah</h2>
+                            <h2 class="font-bold text-slate-700 uppercase tracking-tight">Cita-cita & Harapan Saya terhadap Sekolah</h2>
                         </div>
                     </summary>
                     <div class="p-6 pt-0 border-t border-slate-50 space-y-4">
@@ -313,14 +361,13 @@
                     </div>
                 </details>
 
-                <!-- BLOK 3: KONDISI SEKOLAH -->
                 <details id="sec-3" class="card shadow-sm card-disabled border-l-4 border-l-amber-400">
                     <summary class="flex items-center justify-between p-6 cursor-pointer hover:bg-slate-50 transition-colors list-none">
                         <div class="flex items-center space-x-4">
                             <div id="badge-3" class="status-badge status-incomplete">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" id="icon-3"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" class="hidden" /><text x="7" y="17" font-size="14" font-weight="bold" fill="currentColor" id="num-3">3</text></svg>
                             </div>
-                            <h2 class="font-bold text-slate-700">Kondisi Sekolah Saat Ini Menurut Saya</h2>
+                            <h2 class="font-bold text-slate-700 uppercase tracking-tight">Kondisi Sekolah Saat Ini Menurut Saya</h2>
                         </div>
                     </summary>
                     <div class="p-6 pt-0 border-t border-slate-50 space-y-4">
@@ -391,14 +438,13 @@
                     </div>
                 </details>
 
-                <!-- BLOK 4: REFLEKSI KINERJA -->
                 <details id="sec-4" class="card shadow-sm card-disabled">
                     <summary class="flex items-center justify-between p-6 cursor-pointer hover:bg-slate-50 transition-colors list-none">
                         <div class="flex items-center space-x-4">
                             <div id="badge-4" class="status-badge status-incomplete">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" id="icon-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" class="hidden" /><text x="7" y="17" font-size="14" font-weight="bold" fill="currentColor" id="num-4">4</text></svg>
                             </div>
-                            <h2 class="font-bold text-slate-700">Refleksi Kinerja Saya</h2>
+                            <h2 class="font-bold text-slate-700 uppercase tracking-tight">Refleksi Kinerja Saya</h2>
                         </div>
                     </summary>
                     <div class="p-6 pt-0 border-t border-slate-50 space-y-6">
@@ -421,14 +467,13 @@
                     </div>
                 </details>
 
-                <!-- BLOK 5: REFLEKSI REKAN SEJAWAT (360°) -->
                 <details id="sec-5" class="card shadow-sm card-disabled">
                     <summary class="flex items-center justify-between p-6 cursor-pointer hover:bg-slate-50 transition-colors list-none">
                         <div class="flex items-center space-x-4">
                             <div id="badge-5" class="status-badge status-incomplete">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" id="icon-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" class="hidden" /><text x="7" y="17" font-size="14" font-weight="bold" fill="currentColor" id="num-5">5</text></svg>
                             </div>
-                            <h2 class="font-bold text-slate-700">Refleksi Rekan Sejawat (360°)</h2>
+                            <h2 class="font-bold text-slate-700 uppercase tracking-tight">Refleksi Rekan Sejawat (360°)</h2>
                         </div>
                     </summary>
                     <div class="p-6 pt-0 border-t border-slate-50">
@@ -444,14 +489,13 @@
                     </div>
                 </details>
 
-                <!-- BLOK 6: KOMITMEN & KONSEKUENSI SAYA -->
                 <details id="sec-6" class="card shadow-sm card-disabled">
                     <summary class="flex items-center justify-between p-6 cursor-pointer hover:bg-slate-50 transition-colors list-none">
                         <div class="flex items-center space-x-4">
                             <div id="badge-6" class="status-badge status-incomplete">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" id="icon-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" class="hidden" /><text x="7" y="17" font-size="14" font-weight="bold" fill="currentColor" id="num-6">6</text></svg>
                             </div>
-                            <h2 class="font-bold text-slate-700">Komitmen & Konsekuensi Saya</h2>
+                            <h2 class="font-bold text-slate-700 uppercase tracking-tight">Komitmen & Konsekuensi Saya</h2>
                         </div>
                     </summary>
                     <div class="p-6 pt-0 border-t border-slate-50 space-y-6">
@@ -478,14 +522,14 @@
             </form>
         </section>
 
-        <!-- DASHBOARD (ANALISIS KOLEKTIF) -->
+        <!-- DASHBOARD (RESTORED WIDTH) -->
         <section id="content-dashboard" class="hidden space-y-6 pb-20">
             <!-- RESPONDEN BLOCK UI -->
             <div class="flex justify-center">
                 <div id="responden-stats-card" onclick="window.openRespondentModal()" data-tooltip="" class="card p-5 border-l-4 border-amber-500 w-full max-w-[240px] flex flex-col items-center justify-center cursor-pointer hover:shadow-lg transition-all duration-300 hover:scale-[1.02]">
-                    <h4 class="text-base font-black text-slate-400 uppercase tracking-widest no-italic mb-1">Responden</h4>
+                    <h4 class="text-base font-black text-slate-400 uppercase tracking-widest no-italic mb-1 text-center">Responden</h4>
                     <div class="flex items-baseline space-x-2">
-                        <span id="stat-count" class="text-4xl font-black text-slate-800 leading-none">0</span>
+                        <span id="stat-count" class="text-4xl font-black text-slate-800 leading-none text-center">0</span>
                     </div>
                 </div>
             </div>
@@ -495,7 +539,7 @@
             </div>
         </section>
 
-        <!-- DATABASE (ADMIN ONLY) -->
+        <!-- DATABASE (RESTORED WIDTH) -->
         <section id="content-database" class="hidden space-y-4">
             <div class="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border">
                 <div class="flex space-x-2">
@@ -665,7 +709,7 @@
                 if (input) input.value = savedKey;
             }
             
-            // DEFAULT REDIRECT TO HOME TAB
+            // WEB SELALU DIBUKA DI TAB HOME
             window.switchTab('home');
             
             renderDashboard();
@@ -755,7 +799,12 @@
         };
 
         function applyAdminState() {
+            // Tampilkan seluruh tab navigasi untuk admin
+            document.getElementById('tab-form').classList.remove('hidden');
+            document.getElementById('tab-dashboard').classList.remove('hidden');
             document.getElementById('tab-database').classList.remove('hidden');
+            document.getElementById('tab-gemini').classList.remove('hidden');
+
             document.getElementById('btn-login-admin').classList.add('hidden');
             document.getElementById('btn-logout-admin').classList.remove('hidden');
             for (let i = 1; i <= 6; i++) {
@@ -784,7 +833,7 @@
                     <div class="flex items-center space-x-3">
                         <div id="peer-status-${id}" class="w-2 h-2 rounded-full bg-slate-300"></div>
                         <div class="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-[10px] font-bold text-blue-600">${emp.name.split(' ').map(n => n[0]).join('')}</div>
-                        <span class="text-sm font-semibold text-slate-700">${emp.name}</span>
+                        <span class="text-sm font-semibold text-slate-700 uppercase">${emp.name}</span>
                     </div>
                 </summary>
                 <div class="p-4 pt-0 border-t space-y-4">
@@ -872,8 +921,12 @@
             if (geminiTab) geminiTab.classList.replace('tab-active', 'tab-inactive');
 
             if (tab !== 'gemini') {
-                document.getElementById(`content-${tab}`).classList.remove('hidden');
-                document.getElementById(`tab-${tab}`).classList.replace('tab-inactive', 'tab-active');
+                const contentEl = document.getElementById(`content-${tab}`);
+                if (contentEl) contentEl.classList.remove('hidden');
+                
+                const tabEl = document.getElementById(`tab-${tab}`);
+                if (tabEl) tabEl.classList.replace('tab-inactive', 'tab-active');
+                
                 if (tab === 'dashboard') renderDashboard();
                 if (tab === 'database') renderDatabase();
                 setTimeout(() => window.initTooltips(), 50);
@@ -952,7 +1005,7 @@ KETENTUAN WAJIB:
 7. Fokus pada kesimpulan kualitatif yang paling relevan dan dominan.
 
 OUTPUT:
-Tuliskan 3–5 kalimat sintesis kualitatif yang merangkum keseluruhan jawaban responden secara komprehensif dan efisien.
+Tuliskan 3–5 kalimat sintesis kualitatif yang merangkum keseluruhan jawaban responden secara komprehensif and efisien.
 
 Berikut kumpulan jawaban responden (tanpa identitas):
 {{DATA_JAWABAN_SUB_BAGIAN}}`;
@@ -1068,14 +1121,14 @@ Hasilkan satu paragraf utuh yang terdiri dari 5–7 kalimat efektif.`;
                         <div class="space-y-6 mb-10">${block.data.map(item => `<div class="p-5 bg-white border border-slate-200 rounded-xl shadow-sm presentation-text text-slate-800 no-italic transition-all hover:border-blue-200"><div class="font-black text-blue-900 mb-1 uppercase text-[10px] tracking-widest">${item.user}:</div>${item.text}</div>`).join('')}</div>
                         <div class="p-6 bg-blue-50 rounded-2xl border-2 border-blue-100 ai-synthesis-box">
                             <h4 class="text-xs font-black text-blue-800 uppercase mb-4 no-italic tracking-tighter flex justify-between items-center"><span>Sintesis Kualitatif (Gemini AI Analytics)</span></h4>
-                            <div id="synthesis-${block.id}"><button onclick="window.triggerAISynthesis('${block.id}', window.aiDataStore['${block.id}'], '${block.label}')" class="px-6 py-3 bg-blue-600 text-white rounded-xl font-bold text-sm shadow-lg hover:bg-blue-700 transition-all">Mulai Sintesis Kualitatif (AI)</button></div>
+                            <div id="synthesis-${block.id}"><button onclick="window.triggerAISynthesis('${block.id}', window.aiDataStore['${block.id}'], '${block.label}')" class="px-6 py-3 bg-blue-600 text-white rounded-xl font-bold text-sm shadow-lg hover:bg-blue-700 transition-all uppercase">Mulai Sintesis Kualitatif (AI)</button></div>
                         </div>
                     </div>`;
                 container.appendChild(details);
             }
             const sectionHeader = document.createElement('div');
             sectionHeader.className = "mt-16 mb-8 pt-8 border-t";
-            sectionHeader.innerHTML = `<h2 class="presentation-header text-slate-900 uppercase tracking-tighter no-italic">Laporan Analisis Refleksi 360° (Per Orang)</h2>`;
+            sectionHeader.innerHTML = `<h2 class="presentation-header text-slate-900 no-italic">Laporan Analisis Refleksi 360° (Per Orang)</h2>`;
             container.appendChild(sectionHeader);
             for (const emp of employees) {
                 const reviews = database.map(d => d.peerReviews[emp.name]).filter(r => r && r.strength);
@@ -1099,7 +1152,7 @@ Hasilkan satu paragraf utuh yang terdiri dari 5–7 kalimat efektif.`;
                             <div><h4 class="text-sm font-black text-blue-700 uppercase mb-4 tracking-widest no-italic">Harapan</h4><div class="space-y-3">${reviews.map(r => r.hope).map(t => `<div class="p-4 bg-white border border-blue-100 rounded-xl presentation-text text-slate-800 no-italic transition-all hover:bg-slate-50">"${t}"</div>`).join('')}</div></div>
                             <div class="p-6 bg-emerald-50 border-2 border-emerald-500 rounded-2xl shadow-sm mb-4 ai-synthesis-box">
                                 <h4 class="text-xs font-black text-slate-900 uppercase mb-4 no-italic tracking-tighter flex justify-between items-center"><span>Sintesis Kualitatif Profil (Gemini AI)</span></h4>
-                                <div id="synthesis-${synthesisId}"><button onclick="window.triggerAISynthesis('${synthesisId}', window.aiDataStore['${synthesisId}'], 'Profil Kinerja ${emp.name}', true)" class="px-6 py-3 bg-emerald-600 text-white rounded-xl font-bold text-sm shadow-lg hover:bg-emerald-700 transition-all">Mulai Sintesis Kualitatif (AI)</button></div>
+                                <div id="synthesis-${synthesisId}"><button onclick="window.triggerAISynthesis('${synthesisId}', window.aiDataStore['${synthesisId}'], 'Profil Kinerja ${emp.name}', true)" class="px-6 py-3 bg-emerald-600 text-white rounded-xl font-bold text-sm shadow-lg hover:bg-emerald-700 transition-all uppercase">Mulai Sintesis Kualitatif (AI)</button></div>
                             </div>
                         </div>`;
                     container.appendChild(personDetails);
