@@ -88,7 +88,9 @@
                     <span class="font-bold text-lg tracking-tight">Refleksi Kinerja SDN Perdana</span>
                 </div>
                 <div class="flex items-center space-x-6 text-sm">
-                    <button onclick="switchTab('form')" id="tab-form" data-tooltip="Isi formulir refleksi kinerja Anda" class="tab-active py-5 transition-all">Formulir</button>
+                    <!-- TAB BARU: HOME (DEFAULT) -->
+                    <button onclick="switchTab('home')" id="tab-home" data-tooltip="Halaman Beranda Utama" class="tab-active py-5 transition-all">Home</button>
+                    <button onclick="switchTab('form')" id="tab-form" data-tooltip="Isi formulir refleksi kinerja Anda" class="tab-inactive py-5 transition-all">Formulir</button>
                     <button onclick="switchTab('dashboard')" id="tab-dashboard" data-tooltip="Lihat analisis kualitatif seluruh responden" class="tab-inactive py-5 transition-all">Analisis Kolektif</button>
                     <button onclick="switchTab('database')" id="tab-database" data-tooltip="Kelola data rekaman refleksi (Admin)" class="tab-inactive py-5 transition-all hidden">Database</button>
                     <button onclick="window.openGeminiModal()" id="tab-gemini" data-tooltip="Konfigurasi API Key Gemini AI" class="tab-inactive py-5 transition-all">Gemini</button>
@@ -188,8 +190,70 @@
 
     <main class="max-w-5xl mx-auto px-4 py-8">
 
+        <!-- SECTION: HOME (LANDING PAGE) -->
+        <section id="content-home" class="space-y-8 animate-in fade-in duration-700">
+            <div class="card p-10 md:p-16 border-l-8 border-blue-600 bg-white shadow-xl relative overflow-hidden">
+                <div class="absolute top-0 right-0 p-8 opacity-5">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-48 w-48" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                    </svg>
+                </div>
+                
+                <div class="relative z-10 max-w-3xl">
+                    <h1 class="text-4xl md:text-5xl font-black text-slate-900 leading-tight mb-6 uppercase tracking-tighter">
+                        Selamat Datang di Portal <br>
+                        <span class="text-blue-600">Refleksi Kinerja</span> SDN Perdana
+                    </h1>
+                    
+                    <div class="space-y-6 presentation-text text-slate-600 no-italic leading-relaxed">
+                        <p>
+                            Sistem Refleksi Komprehensif ini dirancang sebagai instrumen evaluasi diri dan kolaboratif guna memperkuat budaya kerja profesional di lingkungan satuan pendidikan kita. Melalui portal ini, setiap pendidik dan tenaga kependidikan berkesempatan untuk meninjau kembali dedikasi, kontribusi, serta area pengembangan demi kemajuan bersama.
+                        </p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
+                            <div class="flex items-start space-x-4">
+                                <div class="bg-blue-100 p-2 rounded-lg text-blue-600 shrink-0">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-slate-800 text-sm uppercase mb-1">Evaluasi Objektif</h4>
+                                    <p class="text-xs">Menyediakan data kualitatif yang jujur untuk pemetaan kekuatan tim.</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start space-x-4">
+                                <div class="bg-amber-100 p-2 rounded-lg text-amber-600 shrink-0">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-slate-800 text-sm uppercase mb-1">Kerahasiaan Terjamin</h4>
+                                    <p class="text-xs">Identitas penilai pada bagian 360° sepenuhnya anonim dan terlindungi.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <p>
+                            Partisipasi Anda sangat krusial. Setiap poin refleksi dan komitmen yang Anda sampaikan akan menjadi landasan kebijakan strategis sekolah di masa yang akan datang.
+                        </p>
+                    </div>
+                    
+                    <div class="mt-12">
+                        <button onclick="switchTab('form')" class="group flex items-center space-x-4 bg-blue-600 text-white px-10 py-5 rounded-2xl font-black text-lg shadow-2xl shadow-blue-200 hover:bg-blue-700 transition-all active:scale-[0.98]">
+                            <span>Mulai Pengisian Refleksi</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 transform group-hover:translate-x-2 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <!-- SECTION: FORMULIR -->
-        <section id="content-form">
+        <section id="content-form" class="hidden">
             <form id="masterForm" class="space-y-6 pb-20">
                 
                 <!-- BLOK 1: IDENTITAS -->
@@ -577,6 +641,10 @@
                 const input = document.getElementById('google-api-key');
                 if (input) input.value = savedKey;
             }
+            
+            // DEFAULT REDIRECT TO HOME TAB
+            window.switchTab('home');
+            
             renderDashboard();
             renderDatabase();
             window.initTooltips();
@@ -771,7 +839,7 @@
         };
 
         window.switchTab = (tab) => {
-            ['form', 'dashboard', 'database'].forEach(t => {
+            ['home', 'form', 'dashboard', 'database'].forEach(t => {
                 const el = document.getElementById(`content-${t}`);
                 if (el) el.classList.add('hidden');
                 const tb = document.getElementById(`tab-${t}`);
@@ -842,7 +910,7 @@
             }
         });
 
-        // 2.0 INTEGRASI GEMINI AI (PROMPT OPTIMIZATION)
+        // 2.0 INTEGRASI GEMINI AI
         window.fetchGeminiSynthesis = async function(answers) {
             const apiKeyInput = document.getElementById('google-api-key');
             const apiKey = apiKeyInput ? apiKeyInput.value.trim() : ""; 
