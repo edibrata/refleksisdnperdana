@@ -305,7 +305,7 @@
             <form id="masterForm" class="space-y-6 pb-20">
                 
                 <!-- BLOK 1: IDENTITAS -->
-                <details id="sec-1" class="card shadow-sm" open>
+                <details id="sec-1" class="card shadow-sm border-l-4 border-l-blue-400" open>
                     <summary class="flex items-center justify-between p-6 cursor-pointer hover:bg-slate-50 transition-colors list-none">
                         <div class="flex items-center space-x-4">
                             <div id="badge-1" class="status-badge status-incomplete">
@@ -316,31 +316,23 @@
                     </summary>
                     <div class="p-6 pt-0 border-t border-slate-50">
                         <div class="max-w-md space-y-4">
-                            <div>
+                            <div class="relative">
                                 <label class="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Pilih Nama Anda</label>
-                                <select id="user_name" class="input-field" required onchange="window.filterPeerReview()">
+                                <select id="user_name" class="input-field" required onchange="window.onNameSelected()">
                                     <option value="">-- Pilih Nama --</option>
-                                    <option>Neneng Imas Kurnia</option>
-                                    <option>Ujang Edi Brata</option>
-                                    <option>Asep Ruhbi</option>
-                                    <option>Uju Juaenah</option>
-                                    <option>Bahtiar Arifin</option>
-                                    <option>Cupang Sulastri</option>
-                                    <option>Kamjah</option>
-                                    <option>Iis Isnayah</option>
-                                    <option>Rini Lestari</option>
-                                    <option>Novianti</option>
-                                    <option>Ahmad Sanusi</option>
-                                    <option>Samsudin</option>
+                                    <!-- Dynamic Options -->
                                 </select>
+                                <div class="mt-2 flex justify-end">
+                                    <button type="button" id="btn-toggle-revision" onclick="window.toggleRevisionMode()" class="text-[10px] font-bold text-blue-600 hover:underline">Sudah pernah mengisi? Klik untuk revisi data Anda.</button>
+                                </div>
                             </div>
                             <button type="button" onclick="window.validateAndNext(1)" data-tooltip="Simpan identitas dan lanjut ke bagian cita-cita" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold text-sm hover:bg-blue-700 transition-colors shadow-sm">Lanjut</button>
                         </div>
                     </div>
                 </details>
 
-                <!-- BLOK 2-6 Dibiarkan Identik Sesuai Kode Sebelumnya Sesuai Ketentuan Mutlak -->
-                <details id="sec-2" class="card shadow-sm card-disabled">
+                <!-- BLOK 2-6 -->
+                <details id="sec-2" class="card shadow-sm card-disabled border-l-4 border-l-indigo-400">
                     <summary class="flex items-center justify-between p-6 cursor-pointer hover:bg-slate-50 transition-colors list-none">
                         <div class="flex items-center space-x-4">
                             <div id="badge-2" class="status-badge status-incomplete">
@@ -438,7 +430,7 @@
                     </div>
                 </details>
 
-                <details id="sec-4" class="card shadow-sm card-disabled">
+                <details id="sec-4" class="card shadow-sm card-disabled border-l-4 border-l-emerald-400">
                     <summary class="flex items-center justify-between p-6 cursor-pointer hover:bg-slate-50 transition-colors list-none">
                         <div class="flex items-center space-x-4">
                             <div id="badge-4" class="status-badge status-incomplete">
@@ -467,7 +459,7 @@
                     </div>
                 </details>
 
-                <details id="sec-5" class="card shadow-sm card-disabled">
+                <details id="sec-5" class="card shadow-sm card-disabled border-l-4 border-l-rose-400">
                     <summary class="flex items-center justify-between p-6 cursor-pointer hover:bg-slate-50 transition-colors list-none">
                         <div class="flex items-center space-x-4">
                             <div id="badge-5" class="status-badge status-incomplete">
@@ -489,7 +481,7 @@
                     </div>
                 </details>
 
-                <details id="sec-6" class="card shadow-sm card-disabled">
+                <details id="sec-6" class="card shadow-sm card-disabled border-l-4 border-l-violet-400">
                     <summary class="flex items-center justify-between p-6 cursor-pointer hover:bg-slate-50 transition-colors list-none">
                         <div class="flex items-center space-x-4">
                             <div id="badge-6" class="status-badge status-incomplete">
@@ -573,7 +565,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, doc, deleteDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
             apiKey: "AIzaSyC6IXCk6EXm0ndord8Is6cRZf_mG2MY5UM",
@@ -608,6 +600,9 @@
         let isAdmin = localStorage.getItem('admin_sdn_active') === 'true';
         let currentSort = { key: 'createdAt', direction: 'desc' };
         let selectedIds = new Set();
+        let isRevisionMode = false;
+        let editingId = null;
+
         const reflectionsCollection = collection(db, 'artifacts', appId, 'public', 'data', 'reflections');
 
         // TOAST NOTIFICATION UTILITY
@@ -669,12 +664,113 @@
                     database = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     renderDashboard();
                     renderDatabase();
+                    updateNameOptions();
                     window.initTooltips();
                 }, (error) => {
                     console.error("Firestore sync error:", error);
                 });
             }
         });
+
+        // REVISION MODE LOGIC
+        window.toggleRevisionMode = () => {
+            isRevisionMode = !isRevisionMode;
+            editingId = null;
+            const btn = document.getElementById('btn-toggle-revision');
+            const btnSubmit = document.getElementById('btn-submit-all');
+            
+            if (isRevisionMode) {
+                btn.innerText = "Batal Revisi? Kembali ke mode pengisian baru.";
+                btn.classList.replace('text-blue-600', 'text-amber-600');
+                btnSubmit.querySelector('span').innerText = "Simpan Perubahan (Revisi)";
+            } else {
+                btn.innerText = "Sudah pernah mengisi? Klik untuk revisi data Anda.";
+                btn.classList.replace('text-amber-600', 'text-blue-600');
+                btnSubmit.querySelector('span').innerText = "Simpan Seluruh Hasil Refleksi";
+                resetFormFields();
+            }
+            updateNameOptions();
+        };
+
+        window.updateNameOptions = () => {
+            const select = document.getElementById('user_name');
+            const submittedNames = database.map(d => d.user);
+            
+            let filtered = [];
+            if (isRevisionMode) {
+                filtered = employees.filter(e => submittedNames.includes(e.name));
+            } else {
+                filtered = employees.filter(e => !submittedNames.includes(e.name));
+            }
+            
+            const currentVal = select.value;
+            select.innerHTML = '<option value="">-- Pilih Nama --</option>';
+            filtered.forEach(emp => {
+                const opt = document.createElement('option');
+                opt.value = emp.name;
+                opt.textContent = emp.name;
+                select.appendChild(opt);
+            });
+            if (filtered.some(e => e.name === currentVal)) select.value = currentVal;
+        };
+
+        window.onNameSelected = () => {
+            const name = document.getElementById('user_name').value;
+            if (isRevisionMode && name) {
+                const existingData = database.find(d => d.user === name);
+                if (existingData) {
+                    loadRevisionData(existingData);
+                }
+            } else {
+                editingId = null;
+                window.filterPeerReview();
+            }
+        };
+
+        function loadRevisionData(data) {
+            editingId = data.id;
+            
+            // Populate Fields
+            document.getElementById('self_vision').value = data.vision || "";
+            document.getElementById('cond_good').value = data.condition?.good || "";
+            document.getElementById('cond_bad').value = data.condition?.bad || "";
+            document.getElementById('cond_good_indicator').value = data.condition?.good_ind || "";
+            document.getElementById('cond_bad_indicator').value = data.condition?.bad_ind || "";
+            document.getElementById('cond_good_cause').value = data.condition?.good_cause || "";
+            document.getElementById('cond_bad_cause').value = data.condition?.bad_cause || "";
+            document.getElementById('solusi_terbaik').value = data.solusi_terbaik || "";
+            document.getElementById('solusi_alternatif').value = data.solusi_alternatif || "";
+            document.getElementById('self_strength').value = data.self?.strength || "";
+            document.getElementById('self_weakness').value = data.self?.weakness || "";
+            document.getElementById('self_effort').value = data.self?.effort || "";
+            document.getElementById('final_commitment').value = data.commitment || "";
+            document.getElementById('final_consequence').value = data.consequence || "";
+
+            // Populate Peer Reviews
+            employees.forEach(emp => {
+                const id = emp.name.replace(/\s+/g, '_');
+                const review = data.peerReviews ? data.peerReviews[emp.name] : null;
+                if (review) {
+                    const s = document.querySelector(`[name="strength_${id}"]`);
+                    const w = document.querySelector(`[name="weakness_${id}"]`);
+                    const h = document.querySelector(`[name="hope_${id}"]`);
+                    if (s) s.value = review.strength || "";
+                    if (w) w.value = review.weakness || "";
+                    if (h) h.value = review.hope || "";
+                }
+            });
+
+            // Trigger visual updates
+            document.querySelectorAll('.comp-input').forEach(el => el.dispatchEvent(new Event('input')));
+            window.filterPeerReview();
+            window.showToast(`Data ${data.user} berhasil dimuat untuk revisi.`);
+        }
+
+        function resetFormFields() {
+            document.getElementById('masterForm').reset();
+            document.querySelectorAll('.comp-input').forEach(el => el.dispatchEvent(new Event('input')));
+            window.filterPeerReview();
+        }
 
         // LOGIKA INDIKATOR KARAKTER DINAMIS
         document.addEventListener('input', (e) => {
@@ -714,6 +810,7 @@
             
             renderDashboard();
             renderDatabase();
+            updateNameOptions();
             window.initTooltips();
         };
 
@@ -976,8 +1073,15 @@
                         };
                     }
                 });
-                await addDoc(reflectionsCollection, reflectionData);
-                window.showToast("Berhasil Disimpan!");
+
+                if (editingId) {
+                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reflections', editingId), reflectionData);
+                    window.showToast("Revisi Berhasil Diperbarui!");
+                } else {
+                    await addDoc(reflectionsCollection, reflectionData);
+                    window.showToast("Berhasil Disimpan!");
+                }
+                
                 setTimeout(() => location.reload(), 1500);
             } catch (error) {
                 window.showToast("Gagal menyimpan!");
@@ -1007,7 +1111,7 @@ KETENTUAN WAJIB:
 OUTPUT:
 Tuliskan 3–5 kalimat sintesis kualitatif yang merangkum keseluruhan jawaban responden secara komprehensif and efisien.
 
-Berikut kumpulan jawaban responden (tanpa identitas):
+Berikut kumpulan jawaban responden (tanita identitas):
 {{DATA_JAWABAN_SUB_BAGIAN}}`;
 
             const userQuery = answers.join('\n- ');
@@ -1053,7 +1157,7 @@ STRUKTUR OUTPUT WAJIB:
 Hasilkan satu paragraf utuh yang terdiri dari 5–7 kalimat efektif.`;
 
             const userQuery = `Kelebihan:\n${data.kelebihan.join('\n- ')}\nKelemahan:\n${data.kelemahan.join('\n- ')}\nHarapan:\n${data.harapan.join('\n- ')}`;
-            const payload = { contents: [{ parts: [{ text: userQuery }] }], systemInstruction: { parts: [{ text: systemPrompt }] } };
+            const payload = { contents: [{ parts: [{ text: `DATA JAWABAN:\n${userQuery}` }] }], systemInstruction: { parts: [{ text: systemPrompt }] } };
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
 
             for (let i = 0; i < 5; i++) {
